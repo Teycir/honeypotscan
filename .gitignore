@@ -41,3 +41,4 @@ Thumbs.db
 # Cloudflare
 .wrangler/
 wrangler.toml.backup
+.history

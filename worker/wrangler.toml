@@ -1,5 +1,5 @@
 name = "honeypotscan-api"
-main = "index.js"
+main = "index.ts"
 compatibility_date = "2024-01-01"
 account_id = "5409b078a5a93cd064a01ec1fd56e675"
 

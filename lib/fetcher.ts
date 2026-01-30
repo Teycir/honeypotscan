@@ -1,14 +1,6 @@
 import { CHAIN_CONFIGS } from './patterns';
 import { parseSourceCode } from './parser';
-
-interface Env {
-  ETHERSCAN_API_KEY_1?: string;
-  ETHERSCAN_API_KEY_2?: string;
-  ETHERSCAN_API_KEY_3?: string;
-  ETHERSCAN_API_KEY_4?: string;
-  ETHERSCAN_API_KEY_5?: string;
-  ETHERSCAN_API_KEY_6?: string;
-}
+import type { Env } from '@/types';
 
 export async function fetchContractSource(address: string, chain: string, env: Env): Promise<string> {
   const config = CHAIN_CONFIGS[chain];

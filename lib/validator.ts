@@ -1,3 +1,5 @@
+import { CHAIN_CONFIGS } from './patterns';
+
 export function validateAddress(address: string): { valid: boolean; error?: string } {
   if (!address || typeof address !== 'string') {
     return { valid: false, error: 'Address is required' };
@@ -11,7 +13,7 @@ export function validateAddress(address: string): { valid: boolean; error?: stri
 }
 
 export function validateChain(chain: string): { valid: boolean; error?: string } {
-  const validChains = ['ethereum', 'polygon', 'arbitrum'];
+  const validChains = Object.keys(CHAIN_CONFIGS);
   
   if (!chain || typeof chain !== 'string') {
     return { valid: false, error: 'Chain is required' };

@@ -10,19 +10,13 @@ import StackedTitle from './components/StackedTitle';
 import { AnimatedTagline } from './components/AnimatedTagline';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '@/lib/constants';
-
-const DEMO_ADDRESS = '0xdAC17F958D2ee523a2206206994597C13D831ec7';
-
-function isValidEthereumAddress(address: string): boolean {
-  return /^0x[a-fA-F0-9]{40}$/.test(address);
-}
+import { validateAddress as validateEthAddress } from '@/lib/validator';
 
 export default function Home() {
   const router = useRouter();
   const [addresses, setAddresses] = useState(['', '', '']);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [expandedInputs, setExpandedInputs] = useState([true, false, false]);
   const [validationErrors, setValidationErrors] = useState<string[]>(['', '', '']);
 
   const validateAddress = (address: string, index: number) => {
@@ -34,11 +28,8 @@ export default function Home() {
     }
 
     const newErrors = [...validationErrors];
-    if (!isValidEthereumAddress(address.trim())) {
-      newErrors[index] = 'Invalid Ethereum address format';
-    } else {
-      newErrors[index] = '';
-    }
+    const validation = validateEthAddress(address.trim());
+    newErrors[index] = validation.valid ? '' : (validation.error || 'Invalid address');
     setValidationErrors(newErrors);
   };
 
@@ -48,30 +39,6 @@ export default function Home() {
     newAddrs[index] = trimmed;
     setAddresses(newAddrs);
     validateAddress(trimmed, index);
-  };
-
-  const handlePaste = async (index: number) => {
-    try {
-      const text = await navigator.clipboard.readText();
-      handleAddressChange(text, index);
-      if (!expandedInputs[index]) {
-        const newExpanded = [...expandedInputs];
-        newExpanded[index] = true;
-        setExpandedInputs(newExpanded);
-      }
-    } catch (err) {
-      console.error('Failed to read clipboard:', err);
-    }
-  };
-
-  const handleDemo = () => {
-    const newAddrs = [...addresses];
-    newAddrs[0] = DEMO_ADDRESS;
-    setAddresses(newAddrs);
-    validateAddress(DEMO_ADDRESS, 0);
-    const newExpanded = [...expandedInputs];
-    newExpanded[0] = true;
-    setExpandedInputs(newExpanded);
   };
 
   const handleClearAll = () => {

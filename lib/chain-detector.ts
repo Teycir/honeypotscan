@@ -1,9 +1,10 @@
+import { CHAIN_CONFIGS } from './patterns';
+
 export async function detectChain(address: string): Promise<string | null> {
-  const chains = [
-    { name: 'ethereum', chainId: 1 },
-    { name: 'polygon', chainId: 137 },
-    { name: 'arbitrum', chainId: 42161 }
-  ];
+  const chains = Object.entries(CHAIN_CONFIGS).map(([name, config]) => ({
+    name,
+    chainId: config.chainId
+  }));
   
   const checks = chains.map(async ({ name, chainId }) => {
     const url = `https://api.etherscan.io/v2/api?chainid=${chainId}&module=proxy&action=eth_getCode&address=${address}&tag=latest`;
