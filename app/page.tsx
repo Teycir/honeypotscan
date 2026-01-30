@@ -1,41 +1,29 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AnimatedBackground } from './components/AnimatedBackground';
 import { AnimatedTitle } from './components/AnimatedTitle';
 import { Footer } from './components/Footer';
 import { LoadingScreen } from './components/LoadingScreen';
 import { CyclingFeatures } from './components/CyclingFeatures';
 import { motion } from 'framer-motion';
-
-type Pattern = {
-  name: string;
-  line: number;
-  code: string;
-};
-
-type ScanResult = {
-  isHoneypot: boolean;
-  confidence: number;
-  patterns: Pattern[];
-  message: string;
-  chain: string;
-};
+import { API_URL } from '@/lib/constants';
+import type { ScanResult } from '@/types';
 
 export default function Home() {
+  const router = useRouter();
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState('');
 
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setResult(null);
 
     try {
-      const res = await fetch('https://honeypotscan-api.teycircoder4.workers.dev', {
+      const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address }),
@@ -47,9 +35,7 @@ export default function Home() {
         throw new Error(data.error || 'Scan failed');
       }
 
-      setResult(data);
-      // Redirect to dedicated result page
-      window.location.href = `/scan/${address}`;
+      router.push(`/scan/${address}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to scan contract');
     } finally {
@@ -137,55 +123,6 @@ export default function Home() {
               <p className="font-medium">❌ Error</p>
               <p className="text-sm mt-1">{error}</p>
             </div>
-          )}
-
-          {/* Results */}
-          {result && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className={`mt-6 border rounded-lg p-6 ${
-                result.isHoneypot 
-                  ? 'bg-red-900/50 border-red-500' 
-                  : 'bg-green-900/50 border-green-500'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-white">
-                    {result.isHoneypot ? '🚨 HONEYPOT DETECTED' : '✅ Safe Contract'}
-                  </h2>
-                  <p className="text-sm text-gray-300 mt-1">Chain: {result.chain}</p>
-                </div>
-                <span className={`px-4 py-2 rounded-full text-sm font-bold ${
-                  result.isHoneypot ? 'bg-red-600' : 'bg-green-600'
-                }`}>
-                  {result.confidence}% Confidence
-                </span>
-              </div>
-
-              <p className="text-gray-200 mb-4">{result.message}</p>
-
-              {result.patterns.length > 0 && (
-                <div>
-                  <p className="text-gray-300 font-medium mb-3">Risky Code Patterns:</p>
-                  <div className="space-y-3">
-                    {result.patterns.map((pattern, i) => (
-                      <div key={i} className="bg-gray-800/50 rounded p-3 border border-gray-700">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-red-400 font-medium text-sm">{pattern.name}</span>
-                          <span className="text-gray-400 text-xs">Line {pattern.line}</span>
-                        </div>
-                        <code className="text-xs text-gray-300 block overflow-x-auto">
-                          {pattern.code}
-                        </code>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </motion.div>
           )}
         </div>
 

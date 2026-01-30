@@ -6,20 +6,8 @@ import { AnimatedBackground } from '../../components/AnimatedBackground';
 import { Footer } from '../../components/Footer';
 import { LoadingScreen } from '../../components/LoadingScreen';
 import { motion } from 'framer-motion';
-
-type Pattern = {
-  name: string;
-  line: number;
-  code: string;
-};
-
-type ScanResult = {
-  isHoneypot: boolean;
-  confidence: number;
-  patterns: Pattern[];
-  message: string;
-  chain: string;
-};
+import { API_URL } from '@/lib/constants';
+import type { ScanResult } from '@/types';
 
 export default function ScanResultPage() {
   const params = useParams();
@@ -32,7 +20,7 @@ export default function ScanResultPage() {
   useEffect(() => {
     const fetchScan = async () => {
       try {
-        const res = await fetch('https://honeypotscan-api.teycircoder4.workers.dev', {
+        const res = await fetch(API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ address }),
