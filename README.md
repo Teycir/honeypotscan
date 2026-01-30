@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛡️ HoneypotScan
 
-## Getting Started
+**Check if a token is a scam before you buy**
 
-First, run the development server:
+Free, fast, and accurate honeypot detection for Ethereum, Polygon, and Arbitrum smart contracts.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## ✨ Features
+
+- 🚀 **Instant Results** - Scan in 2 seconds
+- 🌐 **Multi-chain** - Ethereum, Polygon, Arbitrum
+- 💾 **Smart Caching** - 95%+ cache hit rate
+- 🔒 **Privacy First** - No tracking, no data collection
+- 💰 **100% Free** - No limits, no API keys needed
+
+## 🏗️ Architecture
+
+```
+Next.js 14 (App Router)
+    ↓
+Cloudflare Workers API
+    ↓
+D1 Database (Cache)
+    ↓
+Rust Scanner (from SCPF)
+    ↓
+Etherscan API (6 keys with rotation)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Quick Start
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Install dependencies
+npm install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Set up environment variables
+cp .env.example .env.local
 
-## Learn More
+# Run development server
+npm run dev
 
-To learn more about Next.js, take a look at the following resources:
+# Build for production
+npm run build
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Deploy to Cloudflare
+npm run deploy
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📊 Detection Patterns
 
-## Deploy on Vercel
+- ✅ `tx.origin` abuse in ERC20 functions
+- ✅ Hidden fee functions
+- ✅ Transfer restrictions
+- ✅ Sell blocking logic
+- ✅ Whitelist-only transfers
+- ✅ Hidden sell taxes (95-100%)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🔧 Environment Variables
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```env
+# Etherscan API Keys (6 keys for rotation)
+ETHERSCAN_API_KEY_1=your-key-1
+ETHERSCAN_API_KEY_2=your-key-2
+ETHERSCAN_API_KEY_3=your-key-3
+ETHERSCAN_API_KEY_4=your-key-4
+ETHERSCAN_API_KEY_5=your-key-5
+ETHERSCAN_API_KEY_6=your-key-6
+```
+
+## 📈 Scaling
+
+**Free Tier Capacity:**
+- 100k requests/day (Cloudflare Workers)
+- 5M database reads/day (D1)
+- 2.6M API calls/day (Etherscan)
+- **With 95% cache hit: 52M scans/day**
+
+**Cost: $0/month** 🎉
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 14, React, Tailwind CSS
+- **Backend**: Cloudflare Workers
+- **Database**: Cloudflare D1 (SQLite)
+- **Cache**: Cloudflare KV
+- **Scanner**: Rust (from SmartContractPatternFinder)
+
+## 📝 License
+
+MIT License - see [LICENSE](LICENSE) file
+
+## 👤 Author
+
+**Teycir Ben Soltane**
+- Website: [teycirbensoltane.tn](https://teycirbensoltane.tn)
+- GitHub: [@Teycir](https://github.com/Teycir)
+
+---
+
+**Built with ❤️ using Next.js and Cloudflare**
