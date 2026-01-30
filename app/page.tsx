@@ -2,16 +2,22 @@
 
 import { useState } from 'react';
 
+type Pattern = {
+  name: string;
+  line: number;
+  code: string;
+};
+
 type ScanResult = {
   isHoneypot: boolean;
   confidence: number;
-  patterns: string[];
+  patterns: Pattern[];
   message: string;
+  chain: string;
 };
 
 export default function Home() {
   const [address, setAddress] = useState('');
-  const [chain, setChain] = useState('ethereum');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState('');
@@ -26,7 +32,7 @@ export default function Home() {
       const res = await fetch('https://honeypotscan-api.teycircoder4.workers.dev', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address, chain }),
+        body: JSON.stringify({ address }),
       });
 
       const data = await res.json();
@@ -76,21 +82,6 @@ export default function Home() {
               />
             </div>
 
-            <div className="mb-6">
-              <label className="block text-gray-300 mb-2 font-medium">
-                Blockchain
-              </label>
-              <select
-                value={chain}
-                onChange={(e) => setChain(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              >
-                <option value="ethereum">Ethereum</option>
-                <option value="polygon">Polygon</option>
-                <option value="arbitrum">Arbitrum</option>
-              </select>
-            </div>
-
             <button
               type="submit"
               disabled={loading}
@@ -116,9 +107,12 @@ export default function Home() {
                 : 'bg-green-900/50 border-green-500'
             }`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-white">
-                  {result.isHoneypot ? '🚨 HONEYPOT DETECTED' : '✅ Safe Contract'}
-                </h2>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">
+                    {result.isHoneypot ? '🚨 HONEYPOT DETECTED' : '✅ Safe Contract'}
+                  </h2>
+                  <p className="text-sm text-gray-300 mt-1">Chain: {result.chain}</p>
+                </div>
                 <span className={`px-4 py-2 rounded-full text-sm font-bold ${
                   result.isHoneypot ? 'bg-red-600' : 'bg-green-600'
                 }`}>
@@ -130,12 +124,20 @@ export default function Home() {
 
               {result.patterns.length > 0 && (
                 <div>
-                  <p className="text-gray-300 font-medium mb-2">Detected Patterns:</p>
-                  <ul className="list-disc list-inside text-gray-300 space-y-1">
+                  <p className="text-gray-300 font-medium mb-3">Risky Code Patterns:</p>
+                  <div className="space-y-3">
                     {result.patterns.map((pattern, i) => (
-                      <li key={i} className="text-sm">{pattern}</li>
+                      <div key={i} className="bg-gray-800/50 rounded p-3 border border-gray-700">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-red-400 font-medium text-sm">{pattern.name}</span>
+                          <span className="text-gray-400 text-xs">Line {pattern.line}</span>
+                        </div>
+                        <code className="text-xs text-gray-300 block overflow-x-auto">
+                          {pattern.code}
+                        </code>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               )}
             </div>

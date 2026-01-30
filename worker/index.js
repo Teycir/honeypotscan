@@ -1,6 +1,7 @@
 import { fetchContractSource } from '../lib/fetcher.js';
 import { detectHoneypot } from '../lib/detector.js';
 import { validateAddress, validateChain } from '../lib/validator.js';
+import { detectChain } from '../lib/chain-detector.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -19,7 +20,7 @@ export default {
     }
     
     try {
-      const { address, chain = 'ethereum' } = await request.json();
+      const { address } = await request.json();
       
       // Validate input
       const addressValidation = validateAddress(address);
@@ -30,11 +31,12 @@ export default {
         );
       }
       
-      const chainValidation = validateChain(chain);
-      if (!chainValidation.valid) {
+      // Auto-detect chain
+      const chain = await detectChain(address);
+      if (!chain) {
         return new Response(
-          JSON.stringify({ error: chainValidation.error }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ error: 'Contract not found on supported chains' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       
@@ -64,6 +66,7 @@ export default {
         isHoneypot,
         confidence: isHoneypot ? 95 : 100,
         patterns,
+        chain,
         message: isHoneypot
           ? `⚠️ This contract contains ${patterns.length} honeypot patterns. DO NOT BUY!`
           : '✅ No honeypot patterns detected. Contract appears safe.',
