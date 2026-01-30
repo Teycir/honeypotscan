@@ -20,25 +20,13 @@ const FEATURES = [
 
 export function CyclingFeatures() {
   const [index, setIndex] = useState(0);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     const interval = setInterval(() => {
       setIndex((prev) => (prev + 1) % FEATURES.length);
     }, 4000);
     return () => clearInterval(interval);
   }, []);
-
-  if (!mounted) {
-    return (
-      <div style={{ minHeight: '40px', marginTop: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', padding: '0 16px' }}>
-        <div style={{ fontSize: '11px', opacity: 0.9, fontWeight: 500, textAlign: 'center', width: '100%', maxWidth: '95%', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
-          {FEATURES[0]}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div style={{ minHeight: '40px', marginTop: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', padding: '0 16px' }}>

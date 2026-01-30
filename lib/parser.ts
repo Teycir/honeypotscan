@@ -1,3 +1,7 @@
+interface SourceFile {
+  content?: string;
+}
+
 export function parseSourceCode(sourceCode: string): string {
   const normalized = sourceCode.trim();
   const cleaned = normalized.startsWith('{{') && normalized.endsWith('}}') 
@@ -11,13 +15,14 @@ export function parseSourceCode(sourceCode: string): string {
       if (json.sources) {
         let combined = '';
         for (const [filename, fileObj] of Object.entries(json.sources)) {
-          if ((fileObj as any).content) {
-            combined += `// File: ${filename}\n${(fileObj as any).content}\n\n`;
+          const file = fileObj as SourceFile;
+          if (file.content) {
+            combined += `// File: ${filename}\n${file.content}\n\n`;
           }
         }
         if (combined) return combined;
       }
-    } catch (e) {
+    } catch {
       // Not JSON, return as-is
     }
   }

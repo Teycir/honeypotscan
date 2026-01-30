@@ -9,7 +9,6 @@ import { LoadingScreen } from './components/LoadingScreen';
 import { CyclingFeatures } from './components/CyclingFeatures';
 import { motion } from 'framer-motion';
 import { API_URL } from '@/lib/constants';
-import type { ScanResult } from '@/types';
 
 export default function Home() {
   const router = useRouter();
@@ -30,7 +29,7 @@ export default function Home() {
     }
 
     try {
-      const results = await Promise.all(
+      await Promise.all(
         validAddresses.map(addr => 
           fetch(API_URL, {
             method: 'POST',

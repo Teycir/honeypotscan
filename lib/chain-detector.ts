@@ -15,7 +15,7 @@ export async function detectChain(address: string): Promise<string | null> {
       if (data.result && data.result !== '0x') {
         return name;
       }
-    } catch (e) {
+    } catch {
       return null;
     }
     return null;
