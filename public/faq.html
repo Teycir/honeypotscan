@@ -5,40 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FAQ - HoneypotScan</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(to bottom right, #111827, #1f2937, #111827);
-      color: #e5e7eb;
-      min-height: 100vh;
-      padding: 40px 20px 80px;
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
     }
-    .container { max-width: 800px; margin: 0 auto; }
-    h1 { font-size: 2.5rem; margin-bottom: 2rem; text-align: center; color: #fff; }
-    .faq-item { 
+    @keyframes pulse-glow {
+      0%, 100% { text-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(59, 130, 246, 0.3); }
+      50% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(59, 130, 246, 0.5), 0 0 30px rgba(59, 130, 246, 0.3); }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1520 25%, #0f0f1a 50%, #1a1a2e 75%, #0a0a0a 100%);
+      background-size: 400% 400%;
+      animation: gradientShift 25s ease-in-out infinite;
+      color: #fff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    #particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+    .container { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; padding: 40px 20px 80px; }
+    h1 {
+      font-size: clamp(32px, 8vw, 48px);
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 40px;
+      animation: pulse-glow 8s ease-in-out infinite;
+    }
+    .faq-item {
       background: rgba(31, 41, 55, 0.5);
-      border: 1px solid rgba(75, 85, 99, 0.3);
+      border: 1px solid rgba(59, 130, 246, 0.3);
       border-radius: 8px;
       padding: 24px;
       margin-bottom: 16px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     }
-    .faq-item h2 { 
+    .faq-item:hover {
+      background: rgba(31, 41, 55, 0.7);
+      border: 1px solid rgba(59, 130, 246, 0.5);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4), 0 0 30px rgba(59, 130, 246, 0.2);
+      transform: translateY(-2px);
+    }
+    .faq-item h2 {
       font-size: 1.25rem;
       margin-bottom: 12px;
       color: #60a5fa;
     }
-    .faq-item p { 
+    .faq-item p {
       line-height: 1.6;
       color: #d1d5db;
     }
     .back-link {
-      display: inline-block;
-      margin-bottom: 24px;
-      color: #60a5fa;
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: rgba(255, 255, 255, 0.7);
       text-decoration: none;
-      transition: color 0.2s;
+      font-size: 24px;
+      transition: all 0.2s;
+      z-index: 100;
     }
-    .back-link:hover { color: #93c5fd; }
+    .back-link:hover { color: #fff; }
     footer {
       position: fixed;
       bottom: 0;
@@ -55,18 +84,15 @@
       backdrop-filter: blur(10px);
       z-index: 100;
     }
-    footer a {
-      color: rgba(255, 255, 255, 0.6);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
+    footer a { color: rgba(255, 255, 255, 0.6); text-decoration: none; transition: color 0.2s; }
     footer a:hover { color: #fff; }
     footer span { color: rgba(255, 255, 255, 0.3); user-select: none; }
   </style>
 </head>
 <body>
+  <canvas id="particles"></canvas>
   <div class="container">
-    <a href="/" class="back-link">← Back to Home</a>
+    <a href="/" class="back-link">←</a>
     <h1>🛡️ Frequently Asked Questions</h1>
     
     <div class="faq-item">
@@ -116,7 +142,7 @@
 
     <div class="faq-item">
       <h2>How can I contribute?</h2>
-      <p>Visit our <a href="https://github.com/Teycir/honeypotscan" style="color: #60a5fa;">GitHub repository</a> to report issues, suggest features, or contribute code.</p>
+      <p>Visit our <a href="https://github.com/Teycir/honeypotscan#readme" style="color: #60a5fa;">GitHub repository</a> to report issues, suggest features, or contribute code.</p>
     </div>
   </div>
 
@@ -125,9 +151,50 @@
     <span>•</span>
     <a href="/faq.html">FAQ</a>
     <span>•</span>
+    <a href="/how-to-use.html">How to Use</a>
+    <span>•</span>
     <a href="https://github.com/Teycir/honeypotscan#readme" target="_blank" rel="noopener noreferrer">Source Code</a>
     <span>•</span>
     <a href="https://teycirbensoltane.tn" target="_blank" rel="noopener noreferrer">Made by Teycir</a>
   </footer>
+
+  <script>
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const particles = [];
+    for (let i = 0; i < 30; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 3 + 1,
+        speedX: Math.random() * 0.5 - 0.25,
+        speedY: Math.random() * 0.5 - 0.25,
+        opacity: Math.random() * 0.3 + 0.1
+      });
+    }
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.x += p.speedX;
+        p.y += p.speedY;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.y > canvas.height) p.y = 0;
+        if (p.y < 0) p.y = canvas.height;
+        ctx.fillStyle = `rgba(59, 130, 246, ${p.opacity})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      requestAnimationFrame(animate);
+    }
+    animate();
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  </script>
 </body>
 </html>

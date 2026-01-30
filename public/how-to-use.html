@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How to Use - HoneypotScan</title>
+  <style>
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    @keyframes pulse-glow {
+      0%, 100% { text-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(59, 130, 246, 0.3); }
+      50% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(59, 130, 246, 0.5), 0 0 30px rgba(59, 130, 246, 0.3); }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1520 25%, #0f0f1a 50%, #1a1a2e 75%, #0a0a0a 100%);
+      background-size: 400% 400%;
+      animation: gradientShift 25s ease-in-out infinite;
+      color: #fff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    #particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+    .container { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; padding: 40px 20px 80px; }
+    h1 {
+      font-size: clamp(32px, 8vw, 48px);
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 40px;
+      animation: pulse-glow 8s ease-in-out infinite;
+    }
+    h2 {
+      font-size: 24px;
+      font-weight: 600;
+      margin: 30px 0 15px;
+      color: #fff;
+    }
+    .step {
+      background: rgba(31, 41, 55, 0.5);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    .step:hover {
+      background: rgba(31, 41, 55, 0.7);
+      border: 1px solid rgba(59, 130, 246, 0.5);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4), 0 0 30px rgba(59, 130, 246, 0.2);
+      transform: translateY(-2px);
+    }
+    .step-number {
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(135deg, #3b82f6, #60a5fa);
+      border-radius: 50%;
+      text-align: center;
+      line-height: 30px;
+      font-weight: 700;
+      margin-right: 10px;
+    }
+    .step-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .step-content {
+      font-size: 14px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.8);
+      margin-left: 40px;
+    }
+    .warning {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.5);
+      border-radius: 8px;
+      padding: 15px;
+      margin: 20px 0;
+      font-size: 14px;
+      line-height: 1.6;
+      backdrop-filter: blur(10px);
+    }
+    .warning strong { color: #ef4444; }
+    .back-link {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      font-size: 24px;
+      transition: all 0.2s;
+      z-index: 100;
+    }
+    .back-link:hover { color: #fff; }
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px 20px;
+      font-size: clamp(11px, 2.5vw, 12px);
+      color: rgba(255, 255, 255, 0.6);
+      padding: 12px 20px;
+      background: linear-gradient(to top, rgba(17, 24, 39, 0.95), transparent);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+    }
+    footer a { color: rgba(255, 255, 255, 0.6); text-decoration: none; transition: color 0.2s; }
+    footer a:hover { color: #fff; }
+    footer span { color: rgba(255, 255, 255, 0.3); user-select: none; }
+    ul { margin-left: 20px; margin-top: 10px; }
+    li { margin-bottom: 8px; line-height: 1.6; color: rgba(255, 255, 255, 0.8); }
+  </style>
+</head>
+<body>
+  <canvas id="particles"></canvas>
+  <div class="container">
+    <a href="/" class="back-link">←</a>
+    <h1>🛡️ How to Use HoneypotScan</h1>
+    
+    <h2>Quick Start</h2>
+    
+    <div class="step">
+      <div class="step-title">
+        <span class="step-number">1</span>
+        Get Contract Address
+      </div>
+      <div class="step-content">
+        Copy the smart contract address from your wallet, DEX, or blockchain explorer. It should look like: 0x1234567890abcdef...
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title">
+        <span class="step-number">2</span>
+        Paste & Scan
+      </div>
+      <div class="step-content">
+        Paste the address into HoneypotScan and click "Scan Contract". We'll automatically detect which blockchain it's on (Ethereum, Polygon, or Arbitrum).
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title">
+        <span class="step-number">3</span>
+        Review Results
+      </div>
+      <div class="step-content">
+        Check the scan results:
+        <ul>
+          <li><strong>✅ Safe:</strong> No honeypot patterns detected</li>
+          <li><strong>🚨 Honeypot:</strong> Malicious patterns found - DO NOT BUY</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>Understanding Results</h2>
+
+    <div class="step">
+      <div class="step-title">Risky Code Patterns</div>
+      <div class="step-content">
+        When honeypot patterns are detected, we show:
+        <ul>
+          <li><strong>Pattern Name:</strong> Type of malicious code (e.g., "transfer_tx_origin")</li>
+          <li><strong>Line Number:</strong> Where the risky code is located</li>
+          <li><strong>Code Snippet:</strong> The actual malicious code</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-title">Common Honeypot Patterns</div>
+      <div class="step-content">
+        <ul>
+          <li><strong>tx.origin abuse:</strong> Restricts transfers to contract deployer only</li>
+          <li><strong>Hidden fees:</strong> Secret tax functions that drain your tokens</li>
+          <li><strong>Transfer restrictions:</strong> Prevents selling or transferring tokens</li>
+          <li><strong>Sell blocking:</strong> Allows buying but blocks selling</li>
+          <li><strong>Whitelist-only:</strong> Only whitelisted addresses can transfer</li>
+          <li><strong>Hidden sell tax:</strong> 95-100% tax on sells (you lose everything)</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>Best Practices</h2>
+
+    <div class="step">
+      <div class="step-content">
+        <ul>
+          <li><strong>Always scan before buying:</strong> Don't trust, verify</li>
+          <li><strong>Check multiple sources:</strong> Use other tools like Etherscan, DEXTools</li>
+          <li><strong>Verify source code:</strong> Unverified contracts are red flags</li>
+          <li><strong>Research the project:</strong> Check team, audit reports, community</li>
+          <li><strong>Start small:</strong> Test with small amounts first</li>
+          <li><strong>Trust your instincts:</strong> If it seems too good to be true, it probably is</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="warning">
+      <strong>⚠️ Important:</strong> HoneypotScan is a tool to help identify scams, but it's not perfect. Always do your own research (DYOR) before investing. No tool can guarantee 100% safety.
+    </div>
+
+    <h2>What to Do If You Find a Honeypot</h2>
+
+    <div class="step">
+      <div class="step-content">
+        <ul>
+          <li><strong>DO NOT BUY:</strong> Avoid the token completely</li>
+          <li><strong>Warn others:</strong> Share the scan results in community groups</li>
+          <li><strong>Report it:</strong> Report to the DEX, blockchain explorer, and community</li>
+          <li><strong>Learn from it:</strong> Understand the patterns to spot scams faster</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>Need Help?</h2>
+
+    <div class="step">
+      <div class="step-content">
+        <ul>
+          <li>Check our <a href="/faq.html" style="color: #60a5fa;">FAQ page</a> for common questions</li>
+          <li>Visit our <a href="https://github.com/Teycir/honeypotscan#readme" style="color: #60a5fa;">GitHub repository</a> for technical details</li>
+          <li>Report issues or suggest features on GitHub</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <a href="/">Home</a>
+    <span>•</span>
+    <a href="/faq.html">FAQ</a>
+    <span>•</span>
+    <a href="/how-to-use.html">How to Use</a>
+    <span>•</span>
+    <a href="https://github.com/Teycir/honeypotscan#readme" target="_blank" rel="noopener noreferrer">Source Code</a>
+    <span>•</span>
+    <a href="https://teycirbensoltane.tn" target="_blank" rel="noopener noreferrer">Made by Teycir</a>
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const particles = [];
+    for (let i = 0; i < 30; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 3 + 1,
+        speedX: Math.random() * 0.5 - 0.25,
+        speedY: Math.random() * 0.5 - 0.25,
+        opacity: Math.random() * 0.3 + 0.1
+      });
+    }
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.x += p.speedX;
+        p.y += p.speedY;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.y > canvas.height) p.y = 0;
+        if (p.y < 0) p.y = canvas.height;
+        ctx.fillStyle = `rgba(59, 130, 246, ${p.opacity})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      requestAnimationFrame(animate);
+    }
+    animate();
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>
