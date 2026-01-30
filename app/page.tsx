@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AnimatedBackground } from './components/AnimatedBackground';
 import { AnimatedTitle } from './components/AnimatedTitle';
 import { Footer } from './components/Footer';
+import { LoadingScreen } from './components/LoadingScreen';
 import { motion } from 'framer-motion';
 
 type Pattern = {
@@ -55,6 +56,7 @@ export default function Home() {
 
   return (
     <>
+      <LoadingScreen />
       <AnimatedBackground />
       <main className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
         <div className="container mx-auto px-4 py-16">
@@ -118,7 +120,8 @@ export default function Home() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="start-btn w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.2)' }}
             >
               {loading ? 'Scanning...' : 'Scan Contract'}
             </button>
