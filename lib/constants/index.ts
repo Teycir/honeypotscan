@@ -1,6 +1,6 @@
 export const API_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
   ? 'http://localhost:8787' 
-  : process.env?.NEXT_PUBLIC_API_URL || 'https://honeypotscan-api.teycircoder4.workers.dev';
+  : 'https://honeypotscan-api.teycircoder4.workers.dev';
 
 export const SCAN_CONFIDENCE = {
   HONEYPOT: 95,
