@@ -8,10 +8,10 @@ export function AnimatedTagline({ text }: { text: string }) {
   const chars = text.split('');
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
-  // Render static content on server and initial client render to avoid hydration mismatch
   if (!mounted) {
     return (
       <p className="text-base sm:text-lg text-gray-300 cursor-default group relative">
