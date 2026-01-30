@@ -13,8 +13,7 @@ fi
 
 # Check environment variables
 if [ -z "$ETHERSCAN_API_KEY_1" ]; then
-    echo "⚠️  ETHERSCAN_API_KEY_1 not set"
-    echo "Set in Cloudflare Pages dashboard or .env.local"
+    echo "⚠️  ETHERSCAN_API_KEY_1 not set (optional for frontend-only deploy)"
 fi
 
 # Build

@@ -1,7 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
-
 export type ScanTab = 'address' | 'code';
 
 interface TabNavigationProps {
