@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { AnimatedBackground } from '../../components/AnimatedBackground';
 import { Footer } from '../../components/Footer';
+import { LoadingScreen } from '../../components/LoadingScreen';
 import { motion } from 'framer-motion';
 
 type Pattern = {
@@ -63,6 +64,7 @@ export default function ScanResultPage() {
 
   return (
     <>
+      <LoadingScreen />
       <AnimatedBackground />
       <main className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
         <div className="container mx-auto px-4 py-16">
