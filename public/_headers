@@ -11,6 +11,18 @@
 /_next/data/*
   Cache-Control: public, max-age=0, must-revalidate
 
+/favicon.ico
+  Cache-Control: public, max-age=3600, must-revalidate
+
+/favicon.png
+  Cache-Control: public, max-age=3600, must-revalidate
+
+/apple-touch-icon.png
+  Cache-Control: public, max-age=3600, must-revalidate
+
+/icon-*.png
+  Cache-Control: public, max-age=3600, must-revalidate
+
 /faq.html
   Cache-Control: public, max-age=3600, s-maxage=3600
 

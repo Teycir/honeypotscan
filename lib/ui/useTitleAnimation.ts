@@ -1,10 +1,11 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 
 export function useTitleAnimation(text: string) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listenersRef = useRef<Array<{ element: Element; type: string; handler: EventListener }>>([]);
+  const [isMounted, setIsMounted] = useState(false);
 
   const cleanup = useCallback(() => {
     if (intervalRef.current) {
@@ -21,7 +22,15 @@ export function useTitleAnimation(text: string) {
     listenersRef.current = [];
   }, []);
 
+  // Wait for hydration to complete before manipulating DOM
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    // Don't run until after hydration is complete
+    if (!isMounted) return;
+    
     const titleEl = titleRef.current;
     if (!titleEl) return;
 
@@ -84,7 +93,7 @@ export function useTitleAnimation(text: string) {
     timeoutRef.current = setTimeout(scrambleText, 500);
 
     return cleanup;
-  }, [text, cleanup]);
+  }, [text, cleanup, isMounted]);
 
   return titleRef;
 }

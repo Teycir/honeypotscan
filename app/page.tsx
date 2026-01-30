@@ -103,9 +103,7 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           <div className="text-center mb-6">
             <div className="flex items-center justify-center gap-3 mb-3">
-              <h1 className="text-5xl sm:text-6xl font-bold text-white mb-2">
-                <StackedTitle text="HoneypotScan" className="text-white" />
-              </h1>
+              <StackedTitle text="HoneypotScan" className="text-5xl sm:text-6xl font-bold text-white mb-2" />
             </div>
 
             <AnimatedTagline text="Check if a token is a scam before you buy" />
