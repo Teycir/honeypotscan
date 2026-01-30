@@ -12,16 +12,20 @@
   Cache-Control: public, max-age=0, must-revalidate
 
 /favicon.ico
-  Cache-Control: public, max-age=3600, must-revalidate
+  Cache-Control: public, max-age=0, must-revalidate
+  Cloudflare-CDN-Cache-Control: max-age=300
 
 /favicon.png
-  Cache-Control: public, max-age=3600, must-revalidate
+  Cache-Control: public, max-age=0, must-revalidate
+  Cloudflare-CDN-Cache-Control: max-age=300
 
 /apple-touch-icon.png
-  Cache-Control: public, max-age=3600, must-revalidate
+  Cache-Control: public, max-age=0, must-revalidate
+  Cloudflare-CDN-Cache-Control: max-age=300
 
 /icon-*.png
-  Cache-Control: public, max-age=3600, must-revalidate
+  Cache-Control: public, max-age=0, must-revalidate
+  Cloudflare-CDN-Cache-Control: max-age=300
 
 /faq.html
   Cache-Control: public, max-age=3600, s-maxage=3600

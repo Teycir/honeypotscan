@@ -24,9 +24,12 @@ export const HONEYPOT_PATTERNS: HoneypotPattern[] = [
   { name: 'isSuper_tx_origin', regex: /function\s+_isSuper[^}]{0,200}(?:tx\.origin|origin\(\))/s },
   
   // tx.origin in authentication contexts (from tx_origin_auth template)
-  { name: 'tx_origin_require', regex: /require\s*\(\s*[^)]{0,200}?tx\.origin\s*[!=]=/s },
+  { name: 'tx_origin_require', regex: /require\s*\(\s*[^)]{0,500}?tx\.origin/s },
   { name: 'tx_origin_if_auth', regex: /if\s*\(\s*[^)]{0,200}?tx\.origin\s*[!=]=[^)]{0,200}?\)\s*(?:revert|require)/s },
   { name: 'tx_origin_assert', regex: /assert\s*\(\s*[^)]{0,200}?tx\.origin/s },
+  
+  // tx.origin in mapping access (tracking/restriction patterns)
+  { name: 'tx_origin_mapping', regex: /\[\s*tx\.origin\s*\]\s*=/s },
   
   // Transfer restriction patterns (from honeypot_detection template)
   { name: 'sell_block_pattern', regex: /if\s*\(\s*_isSuper\s*\(\s*recipient\s*\)\s*\)\s*return\s+false/s },

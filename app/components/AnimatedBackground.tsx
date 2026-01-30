@@ -36,9 +36,10 @@ export function AnimatedBackground() {
     }
 
     let animationId: number;
+    let isVisible = true;
 
     function animate() {
-      if (!ctx || !canvas) return;
+      if (!ctx || !canvas || !isVisible) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       particles.forEach(p => {
@@ -59,6 +60,18 @@ export function AnimatedBackground() {
       animationId = requestAnimationFrame(animate);
     }
 
+    // Visibility change handler to pause animation when tab is hidden
+    const handleVisibilityChange = () => {
+      isVisible = !document.hidden;
+      if (isVisible) {
+        // Resume animation
+        animationId = requestAnimationFrame(animate);
+      } else {
+        // Stop animation
+        cancelAnimationFrame(animationId);
+      }
+    };
+
     animate();
 
     const handleResize = () => {
@@ -67,10 +80,12 @@ export function AnimatedBackground() {
     };
 
     window.addEventListener('resize', handleResize);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       cancelAnimationFrame(animationId);
       window.removeEventListener('resize', handleResize);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 

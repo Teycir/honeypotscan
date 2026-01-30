@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
 
 const FEATURES = [
   'tx.origin Detection\nERC20 function abuse',
@@ -18,9 +18,44 @@ const FEATURES = [
   'Pattern Matching\n6+ honeypot signatures',
 ];
 
+// Memoized feature display component - animates the whole text block instead of per-character
+const FeatureDisplay = memo(function FeatureDisplay({ text, index }: { text: string; index: number }) {
+  return (
+    <motion.div
+      key={index}
+      style={{
+        fontSize: '11px',
+        opacity: 0.9,
+        fontWeight: 500,
+        textAlign: 'center',
+        width: '100%',
+        maxWidth: '95%',
+        lineHeight: 1.5,
+        whiteSpace: 'pre-line',
+        wordSpacing: 'normal'
+      }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.3 }}
+    >
+      {text}
+    </motion.div>
+  );
+});
+
 export function CyclingFeatures() {
   const [index, setIndex] = useState(0);
   const [mounted, setMounted] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Cleanup function
+  const cleanup = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 0);
@@ -29,11 +64,34 @@ export function CyclingFeatures() {
 
   useEffect(() => {
     if (!mounted) return;
-    const interval = setInterval(() => {
+
+    // Clear any existing interval
+    cleanup();
+
+    // Use visibility API to pause when tab is hidden
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        cleanup();
+      } else {
+        intervalRef.current = setInterval(() => {
+          setIndex((prev) => (prev + 1) % FEATURES.length);
+        }, 4000);
+      }
+    };
+
+    // Start interval
+    intervalRef.current = setInterval(() => {
       setIndex((prev) => (prev + 1) % FEATURES.length);
     }, 4000);
-    return () => clearInterval(interval);
-  }, [mounted]);
+
+    // Listen for visibility changes
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      cleanup();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [mounted, cleanup]);
 
   // Render static content on server to avoid hydration mismatch
   if (!mounted) {
@@ -49,26 +107,7 @@ export function CyclingFeatures() {
   return (
     <div style={{ minHeight: '40px', marginTop: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', padding: '0 16px' }}>
       <AnimatePresence mode="wait">
-        <motion.div
-          key={index}
-          style={{ fontSize: '11px', opacity: 0.9, fontWeight: 500, textAlign: 'center', width: '100%', maxWidth: '95%', lineHeight: 1.5, whiteSpace: 'pre-line', wordSpacing: 'normal' }}
-        >
-          {FEATURES[index].split('').map((char, i) => (
-            <motion.span
-              key={`${index}-${i}-${char}`}
-              style={{ whiteSpace: 'pre' }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{
-                duration: 0.15,
-                delay: (FEATURES[index].length - 1 - i) * 0.02
-              }}
-            >
-              {char}
-            </motion.span>
-          ))}
-        </motion.div>
+        <FeatureDisplay text={FEATURES[index]} index={index} />
       </AnimatePresence>
     </div>
   );

@@ -6,8 +6,8 @@
 }
 
 @keyframes pulseBtn {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  0%, 100% { box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.2); }
+  50% { box-shadow: 0 4px 16px rgba(59, 130, 246, 0.5), 0 0 30px rgba(59, 130, 246, 0.3); }
 }
 
 @keyframes pulse-glow {
@@ -32,5 +32,5 @@ body {
 }
 
 .start-btn {
-  animation: pulseBtn 2s ease-in-out infinite;
+  animation: pulseBtn 3s ease-in-out infinite;
 }
