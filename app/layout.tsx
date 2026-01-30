@@ -23,10 +23,13 @@ export const metadata: Metadata = {
   authors: [{ name: "Teycir Ben Soltane", url: "https://teycirbensoltane.tn" }],
   creator: "Teycir Ben Soltane",
   publisher: "HoneypotScan",
-  icons: [
-    { rel: "icon", url: "/favicon.ico" },
-    { rel: "apple-touch-icon", url: "/apple-touch-icon.png" },
-  ],
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.png", type: "image/png" }
+    ],
+    apple: "/apple-touch-icon.png"
+  },
   manifest: "/manifest.json",
   openGraph: {
     type: "website",
