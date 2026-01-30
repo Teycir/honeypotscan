@@ -12,8 +12,8 @@ export function Footer() {
   };
 
   return (
-    <footer style={{ position: 'fixed', bottom: 0, left: 0, right: 0, display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '8px 20px', fontSize: 'clamp(11px, 2.5vw, 12px)', color: 'rgba(255, 255, 255, 0.6)', padding: '12px 20px', background: 'linear-gradient(to top, rgba(17, 24, 39, 0.95), transparent)', backdropFilter: 'blur(10px)', zIndex: 100 }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px 20px', flex: 1 }}>
+    <footer style={{ position: 'fixed', bottom: 0, left: 0, right: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', fontSize: 'clamp(11px, 2.5vw, 12px)', color: 'rgba(255, 255, 255, 0.6)', padding: '12px 20px', background: 'linear-gradient(to top, rgba(17, 24, 39, 0.95), transparent)', backdropFilter: 'blur(10px)', zIndex: 100 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px 20px' }}>
         <a href="/faq.html" style={linkStyle} onMouseEnter={(e) => Object.assign(e.currentTarget.style, linkFocusStyle)} onMouseLeave={(e) => Object.assign(e.currentTarget.style, linkStyle)} onFocus={(e) => Object.assign(e.currentTarget.style, linkFocusStyle)} onBlur={(e) => Object.assign(e.currentTarget.style, linkStyle)}>FAQ</a>
         <span style={{ color: 'rgba(255, 255, 255, 0.3)', userSelect: 'none' }}>•</span>
         <a href="/how-to-use.html" style={linkStyle} onMouseEnter={(e) => Object.assign(e.currentTarget.style, linkFocusStyle)} onMouseLeave={(e) => Object.assign(e.currentTarget.style, linkStyle)} onFocus={(e) => Object.assign(e.currentTarget.style, linkFocusStyle)} onBlur={(e) => Object.assign(e.currentTarget.style, linkStyle)}>How to Use</a>
@@ -22,7 +22,7 @@ export function Footer() {
         <span style={{ color: 'rgba(255, 255, 255, 0.3)', userSelect: 'none' }}>•</span>
         <a href="https://teycirbensoltane.tn" target="_blank" rel="noopener noreferrer" style={linkStyle} onMouseEnter={(e) => Object.assign(e.currentTarget.style, linkFocusStyle)} onMouseLeave={(e) => Object.assign(e.currentTarget.style, linkStyle)} onFocus={(e) => Object.assign(e.currentTarget.style, linkFocusStyle)} onBlur={(e) => Object.assign(e.currentTarget.style, linkStyle)}>Made by Teycir</a>
       </div>
-      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', justifyContent: 'center' }}>
         <span style={{ color: 'rgba(255, 255, 255, 0.5)' }}>Share:</span>
         <a href="https://twitter.com/intent/tweet?text=Check%20out%20HoneypotScan%20-%20free%20crypto%20scam%20detection!%20Scan%20tokens%20before%20you%20buy.&url=https://honeypotscan.pages.dev&hashtags=Crypto,Security,Honeypot" target="_blank" rel="noopener noreferrer" style={{ ...linkStyle, display: 'flex', alignItems: 'center', padding: '4px' }} onMouseEnter={(e) => Object.assign(e.currentTarget.style, linkFocusStyle)} onMouseLeave={(e) => Object.assign(e.currentTarget.style, linkStyle)} onFocus={(e) => Object.assign(e.currentTarget.style, linkFocusStyle)} onBlur={(e) => Object.assign(e.currentTarget.style, linkStyle)} aria-label="Share on X/Twitter">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
