@@ -1,3 +1,5 @@
+import { config } from './config';
+
 export interface HoneypotPattern {
   name: string;
   regex: RegExp;
@@ -33,8 +35,7 @@ export const HONEYPOT_PATTERNS: HoneypotPattern[] = [
   { name: 'hidden_sell_tax', regex: /if\s*\([^)]{0,200}pair[^)]{0,200}\)[^{]{0,500}\{[^}]{0,500}sellTax\s*=\s*(?:100|99|98|97|96|95)/s },
 ];
 
-// Require 2+ patterns to avoid false positives (matches SCPF methodology)
-export const MIN_PATTERNS_FOR_DETECTION = 2;
+export const MIN_PATTERNS_FOR_DETECTION = config.scan.minPatterns;
 
 export const CHAIN_CONFIGS: Record<string, ChainConfig> = {
   ethereum: { chainId: 1, name: 'Ethereum' },

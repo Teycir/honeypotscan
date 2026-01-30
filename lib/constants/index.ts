@@ -1,15 +1,17 @@
+import { config } from '../config';
+
 export const API_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-  ? 'http://localhost:8787' 
-  : 'https://honeypotscan-api.teycircoder4.workers.dev';
+  ? config.api.local
+  : config.api.production;
 
 export const SCAN_CONFIDENCE = {
-  HONEYPOT: 95,
-  SAFE: 100,
+  HONEYPOT: config.scan.confidence.honeypot,
+  SAFE: config.scan.confidence.safe,
 } as const;
 
 export const CACHE_TTL = {
-  ONE_DAY: 86400,
-  ONE_WEEK: 604800,
+  ONE_DAY: config.cache.ttl.oneDay,
+  ONE_WEEK: config.cache.ttl.oneWeek,
 } as const;
 
 export const CORS_HEADERS = {
