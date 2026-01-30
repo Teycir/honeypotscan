@@ -13,7 +13,7 @@ import type { ScanResult } from '@/types';
 
 export default function Home() {
   const router = useRouter();
-  const [address, setAddress] = useState('');
+  const [addresses, setAddresses] = useState(['', '', '']);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -22,22 +22,31 @@ export default function Home() {
     setLoading(true);
     setError('');
 
+    const validAddresses = addresses.filter(a => a.trim());
+    if (validAddresses.length === 0) {
+      setError('Please enter at least one contract address');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address }),
-      });
+      const results = await Promise.all(
+        validAddresses.map(addr => 
+          fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ address: addr }),
+          }).then(r => r.json())
+        )
+      );
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Scan failed');
+      if (validAddresses.length === 1) {
+        router.push(`/scan/${validAddresses[0]}`);
+      } else {
+        router.push(`/batch/${validAddresses.join(',')}`);
       }
-
-      router.push(`/scan/${address}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to scan contract');
+      setError(err instanceof Error ? err.message : 'Failed to scan contracts');
     } finally {
       setLoading(false);
     }
@@ -93,18 +102,38 @@ export default function Home() {
         {/* Scan Form */}
         <div className="max-w-2xl mx-auto">
           <form onSubmit={handleScan} className="bg-gray-800 rounded-lg p-8 shadow-2xl">
-            <div className="mb-6">
+            <div className="mb-6 space-y-4">
               <label className="block text-gray-300 mb-2 font-medium">
-                Contract Address
+                Contract Addresses (up to 3)
               </label>
-              <input
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="0x..."
-                className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                required
-              />
+              {addresses.map((addr, i) => (
+                <div key={i} className="relative">
+                  <input
+                    type="text"
+                    value={addr}
+                    onChange={(e) => {
+                      const newAddrs = [...addresses];
+                      newAddrs[i] = e.target.value;
+                      setAddresses(newAddrs);
+                    }}
+                    placeholder={`Contract ${i + 1} (0x...)`}
+                    className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  />
+                  {addr && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newAddrs = [...addresses];
+                        newAddrs[i] = '';
+                        setAddresses(newAddrs);
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
 
             <button

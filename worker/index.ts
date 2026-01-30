@@ -49,17 +49,20 @@ export default {
       }
       
       const cacheKey = `${chain}:${address.toLowerCase()}`;
-      const cached = await env.CACHE?.get(cacheKey, 'json');
-      if (cached) {
-        return new Response(JSON.stringify(cached), {
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json',
-            'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800',
-            'CDN-Cache-Control': 'max-age=86400',
-            'Cloudflare-CDN-Cache-Control': 'max-age=86400'
-          }
-        });
+      
+      if (env.CACHE) {
+        const cached = await env.CACHE.get(cacheKey, 'json');
+        if (cached) {
+          return new Response(JSON.stringify(cached), {
+            headers: {
+              ...corsHeaders,
+              'Content-Type': 'application/json',
+              'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800',
+              'CDN-Cache-Control': 'max-age=86400',
+              'Cloudflare-CDN-Cache-Control': 'max-age=86400'
+            }
+          });
+        }
       }
       
       const source = await fetchContractSource(address, chain, env);
@@ -83,7 +86,9 @@ export default {
           : '✅ No honeypot patterns detected. Contract appears safe.',
       };
       
-      await env.CACHE?.put(cacheKey, JSON.stringify(result), { expirationTtl: 86400 });
+      if (env.CACHE) {
+        await env.CACHE.put(cacheKey, JSON.stringify(result), { expirationTtl: 86400 });
+      }
       
       return new Response(JSON.stringify(result), {
         headers: {

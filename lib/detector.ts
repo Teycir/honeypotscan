@@ -1,4 +1,4 @@
-import { HONEYPOT_PATTERNS } from './patterns';
+import { HONEYPOT_PATTERNS, MIN_PATTERNS_FOR_DETECTION } from './patterns';
 import type { Pattern } from '@/types';
 
 export function detectHoneypot(source: string): { isHoneypot: boolean; patterns: Pattern[] } {
@@ -17,7 +17,7 @@ export function detectHoneypot(source: string): { isHoneypot: boolean; patterns:
   }
   
   return {
-    isHoneypot: matches.length >= 2,
+    isHoneypot: matches.length >= MIN_PATTERNS_FOR_DETECTION,
     patterns: matches,
   };
 }
