@@ -145,6 +145,7 @@ export default function Home() {
           </div>
         </div>
         </div>
+        <div style={{ paddingBottom: '80px' }}></div>
         <Footer />
       </main>
     </>

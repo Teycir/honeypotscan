@@ -159,6 +159,7 @@ export default function ScanResultPage() {
             )}
           </div>
         </div>
+        <div style={{ paddingBottom: '80px' }}></div>
         <Footer />
       </main>
     </>
