@@ -1,6 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { AnimatedBackground } from './components/AnimatedBackground';
+import { AnimatedTitle } from './components/AnimatedTitle';
+import { Footer } from './components/Footer';
+import { motion } from 'framer-motion';
 
 type Pattern = {
   name: string;
@@ -50,20 +54,33 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-      <div className="container mx-auto px-4 py-16">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-6xl font-bold text-white mb-4">
-            🛡️ HoneypotScan
-          </h1>
-          <p className="text-xl text-gray-300">
-            Check if a token is a scam before you buy
-          </p>
-          <p className="text-sm text-gray-400 mt-2">
-            Free • Fast • Accurate
-          </p>
-        </div>
+    <>
+      <AnimatedBackground />
+      <main className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+        <div className="container mx-auto px-4 py-16">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <span className="text-6xl">🛡️</span>
+              <AnimatedTitle text="HoneypotScan" />
+            </div>
+            <motion.p
+              className="text-xl text-gray-300 font-bold"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              whileHover={{
+                scale: 1.05,
+                textShadow: '0 0 20px rgba(255, 255, 255, 0.8)',
+                transition: { duration: 0.3 }
+              }}
+            >
+              Check if a token is a scam before you buy
+            </motion.p>
+            <p className="text-sm text-gray-400 mt-2">
+              Free • Fast • Accurate
+            </p>
+          </div>
 
         {/* Scan Form */}
         <div className="max-w-2xl mx-auto">
@@ -101,11 +118,16 @@ export default function Home() {
 
           {/* Results */}
           {result && (
-            <div className={`mt-6 border rounded-lg p-6 ${
-              result.isHoneypot 
-                ? 'bg-red-900/50 border-red-500' 
-                : 'bg-green-900/50 border-green-500'
-            }`}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className={`mt-6 border rounded-lg p-6 ${
+                result.isHoneypot 
+                  ? 'bg-red-900/50 border-red-500' 
+                  : 'bg-green-900/50 border-green-500'
+              }`}
+            >
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-2xl font-bold text-white">
@@ -140,7 +162,7 @@ export default function Home() {
                   </div>
                 </div>
               )}
-            </div>
+            </motion.div>
           )}
         </div>
 
@@ -162,7 +184,9 @@ export default function Home() {
             <p className="text-gray-400 text-sm">No limits, no API keys</p>
           </div>
         </div>
-      </div>
-    </main>
+        </div>
+        <Footer />
+      </main>
+    </>
   );
 }
