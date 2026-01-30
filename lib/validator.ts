@@ -1,4 +1,4 @@
-export function validateAddress(address) {
+export function validateAddress(address: string): { valid: boolean; error?: string } {
   if (!address || typeof address !== 'string') {
     return { valid: false, error: 'Address is required' };
   }
@@ -10,7 +10,7 @@ export function validateAddress(address) {
   return { valid: true };
 }
 
-export function validateChain(chain) {
+export function validateChain(chain: string): { valid: boolean; error?: string } {
   const validChains = ['ethereum', 'polygon', 'arbitrum'];
   
   if (!chain || typeof chain !== 'string') {

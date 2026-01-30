@@ -1,7 +1,16 @@
-import { CHAIN_CONFIGS } from './patterns.js';
-import { parseSourceCode } from './parser.js';
+import { CHAIN_CONFIGS } from './patterns';
+import { parseSourceCode } from './parser';
 
-export async function fetchContractSource(address, chain, env) {
+interface Env {
+  ETHERSCAN_API_KEY_1?: string;
+  ETHERSCAN_API_KEY_2?: string;
+  ETHERSCAN_API_KEY_3?: string;
+  ETHERSCAN_API_KEY_4?: string;
+  ETHERSCAN_API_KEY_5?: string;
+  ETHERSCAN_API_KEY_6?: string;
+}
+
+export async function fetchContractSource(address: string, chain: string, env: Env): Promise<string> {
   const config = CHAIN_CONFIGS[chain];
   if (!config) throw new Error(`Unsupported chain: ${chain}`);
   
@@ -12,14 +21,13 @@ export async function fetchContractSource(address, chain, env) {
     env.ETHERSCAN_API_KEY_4,
     env.ETHERSCAN_API_KEY_5,
     env.ETHERSCAN_API_KEY_6,
-  ].filter(Boolean);
+  ].filter(Boolean) as string[];
   
   if (keys.length === 0) throw new Error('No API keys configured');
   
-  // Shuffle keys randomly (like Rust implementation)
   const shuffled = keys.sort(() => Math.random() - 0.5);
   
-  let lastError = null;
+  let lastError: Error | null = null;
   
   for (let idx = 0; idx < shuffled.length; idx++) {
     if (idx > 0) {
@@ -53,7 +61,7 @@ export async function fetchContractSource(address, chain, env) {
       return parseSourceCode(sourceCode);
       
     } catch (error) {
-      lastError = error;
+      lastError = error as Error;
       continue;
     }
   }

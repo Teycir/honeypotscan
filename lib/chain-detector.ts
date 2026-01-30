@@ -1,4 +1,4 @@
-export async function detectChain(address) {
+export async function detectChain(address: string): Promise<string | null> {
   const chains = [
     { name: 'ethereum', chainId: 1 },
     { name: 'polygon', chainId: 137 },

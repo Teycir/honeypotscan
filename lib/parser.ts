@@ -1,4 +1,4 @@
-export function parseSourceCode(sourceCode) {
+export function parseSourceCode(sourceCode: string): string {
   const normalized = sourceCode.trim();
   const cleaned = normalized.startsWith('{{') && normalized.endsWith('}}') 
     ? normalized.slice(1, -1) 
@@ -11,8 +11,8 @@ export function parseSourceCode(sourceCode) {
       if (json.sources) {
         let combined = '';
         for (const [filename, fileObj] of Object.entries(json.sources)) {
-          if (fileObj.content) {
-            combined += `// File: ${filename}\n${fileObj.content}\n\n`;
+          if ((fileObj as any).content) {
+            combined += `// File: ${filename}\n${(fileObj as any).content}\n\n`;
           }
         }
         if (combined) return combined;

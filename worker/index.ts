@@ -1,10 +1,20 @@
-import { fetchContractSource } from '../lib/fetcher.js';
-import { detectHoneypot } from '../lib/detector.js';
-import { validateAddress, validateChain } from '../lib/validator.js';
-import { detectChain } from '../lib/chain-detector.js';
+import { fetchContractSource } from '../lib/fetcher';
+import { detectHoneypot } from '../lib/detector';
+import { validateAddress } from '../lib/validator';
+import { detectChain } from '../lib/chain-detector';
+
+interface Env {
+  CACHE?: KVNamespace;
+  ETHERSCAN_API_KEY_1?: string;
+  ETHERSCAN_API_KEY_2?: string;
+  ETHERSCAN_API_KEY_3?: string;
+  ETHERSCAN_API_KEY_4?: string;
+  ETHERSCAN_API_KEY_5?: string;
+  ETHERSCAN_API_KEY_6?: string;
+}
 
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -20,9 +30,8 @@ export default {
     }
     
     try {
-      const { address } = await request.json();
+      const { address } = await request.json() as { address: string };
       
-      // Validate input
       const addressValidation = validateAddress(address);
       if (!addressValidation.valid) {
         return new Response(
@@ -31,7 +40,6 @@ export default {
         );
       }
       
-      // Auto-detect chain
       const chain = await detectChain(address);
       if (!chain) {
         return new Response(
@@ -40,16 +48,20 @@ export default {
         );
       }
       
-      // Check cache
       const cacheKey = `${chain}:${address.toLowerCase()}`;
       const cached = await env.CACHE?.get(cacheKey, 'json');
       if (cached) {
         return new Response(JSON.stringify(cached), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800',
+            'CDN-Cache-Control': 'max-age=86400',
+            'Cloudflare-CDN-Cache-Control': 'max-age=86400'
+          }
         });
       }
       
-      // Fetch source code
       const source = await fetchContractSource(address, chain, env);
       
       if (!source) {
@@ -59,7 +71,6 @@ export default {
         );
       }
       
-      // Detect honeypot
       const { isHoneypot, patterns } = detectHoneypot(source);
       
       const result = {
@@ -72,16 +83,21 @@ export default {
           : '✅ No honeypot patterns detected. Contract appears safe.',
       };
       
-      // Cache result (24 hours)
       await env.CACHE?.put(cacheKey, JSON.stringify(result), { expirationTtl: 86400 });
       
       return new Response(JSON.stringify(result), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800',
+          'CDN-Cache-Control': 'max-age=86400',
+          'Cloudflare-CDN-Cache-Control': 'max-age=86400'
+        }
       });
       
     } catch (error) {
       return new Response(
-        JSON.stringify({ error: error.message || 'Scan failed' }),
+        JSON.stringify({ error: (error as Error).message || 'Scan failed' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

@@ -1,7 +1,8 @@
-import { HONEYPOT_PATTERNS } from './patterns.js';
+import { HONEYPOT_PATTERNS } from './patterns';
+import type { Pattern } from '@/types';
 
-export function detectHoneypot(source) {
-  const matches = [];
+export function detectHoneypot(source: string): { isHoneypot: boolean; patterns: Pattern[] } {
+  const matches: Pattern[] = [];
   
   for (const pattern of HONEYPOT_PATTERNS) {
     const match = pattern.regex.exec(source);
