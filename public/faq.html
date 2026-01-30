@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAQ - HoneypotScan</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(to bottom right, #111827, #1f2937, #111827);
+      color: #e5e7eb;
+      min-height: 100vh;
+      padding: 40px 20px 80px;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 2.5rem; margin-bottom: 2rem; text-align: center; color: #fff; }
+    .faq-item { 
+      background: rgba(31, 41, 55, 0.5);
+      border: 1px solid rgba(75, 85, 99, 0.3);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    .faq-item h2 { 
+      font-size: 1.25rem;
+      margin-bottom: 12px;
+      color: #60a5fa;
+    }
+    .faq-item p { 
+      line-height: 1.6;
+      color: #d1d5db;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 24px;
+      color: #60a5fa;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: #93c5fd; }
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px 20px;
+      font-size: clamp(11px, 2.5vw, 12px);
+      color: rgba(255, 255, 255, 0.6);
+      padding: 12px 20px;
+      background: linear-gradient(to top, rgba(17, 24, 39, 0.95), transparent);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+    }
+    footer a {
+      color: rgba(255, 255, 255, 0.6);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    footer a:hover { color: #fff; }
+    footer span { color: rgba(255, 255, 255, 0.3); user-select: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back-link">← Back to Home</a>
+    <h1>🛡️ Frequently Asked Questions</h1>
+    
+    <div class="faq-item">
+      <h2>What is HoneypotScan?</h2>
+      <p>HoneypotScan is a free tool that analyzes smart contracts to detect honeypot scams before you invest. It scans contract source code for malicious patterns that prevent selling tokens.</p>
+    </div>
+
+    <div class="faq-item">
+      <h2>How does it work?</h2>
+      <p>We fetch the contract source code from blockchain explorers and analyze it using pattern matching to detect common honeypot techniques like tx.origin abuse, hidden fees, transfer restrictions, and sell blocking logic.</p>
+    </div>
+
+    <div class="faq-item">
+      <h2>Which blockchains are supported?</h2>
+      <p>We automatically detect and support Ethereum, Polygon, and Arbitrum. Just paste any contract address and we'll find the right chain.</p>
+    </div>
+
+    <div class="faq-item">
+      <h2>Is it really free?</h2>
+      <p>Yes! 100% free with no limits, no registration, and no API keys needed. We use Cloudflare's free tier and smart caching to keep costs at $0/month.</p>
+    </div>
+
+    <div class="faq-item">
+      <h2>How accurate is the detection?</h2>
+      <p>Our scanner detects 6+ honeypot patterns with 95%+ confidence when patterns are found. However, no tool is perfect - always do your own research before investing.</p>
+    </div>
+
+    <div class="faq-item">
+      <h2>What if the contract source isn't verified?</h2>
+      <p>We can only scan contracts with verified source code on blockchain explorers. Unverified contracts are a red flag on their own.</p>
+    </div>
+
+    <div class="faq-item">
+      <h2>How fast is the scan?</h2>
+      <p>Most scans complete in 2 seconds thanks to our 95%+ cache hit rate. First-time scans may take slightly longer.</p>
+    </div>
+
+    <div class="faq-item">
+      <h2>Is my data private?</h2>
+      <p>Yes. We don't track users, collect personal data, or store search history. Only contract addresses are cached for performance.</p>
+    </div>
+
+    <div class="faq-item">
+      <h2>Can I use this commercially?</h2>
+      <p>HoneypotScan is licensed under BSL 1.1. Non-production use is free. Production use requires a commercial license. It converts to MIT License on 2030-01-30.</p>
+    </div>
+
+    <div class="faq-item">
+      <h2>How can I contribute?</h2>
+      <p>Visit our <a href="https://github.com/Teycir/honeypotscan" style="color: #60a5fa;">GitHub repository</a> to report issues, suggest features, or contribute code.</p>
+    </div>
+  </div>
+
+  <footer>
+    <a href="/">Home</a>
+    <span>•</span>
+    <a href="/faq.html">FAQ</a>
+    <span>•</span>
+    <a href="https://github.com/Teycir/honeypotscan#readme" target="_blank" rel="noopener noreferrer">Source Code</a>
+    <span>•</span>
+    <a href="https://teycirbensoltane.tn" target="_blank" rel="noopener noreferrer">Made by Teycir</a>
+  </footer>
+</body>
+</html>
