@@ -4,7 +4,7 @@ import { validateAddress } from '../lib/validator';
 import { detectChain } from '../lib/chain-detector';
 
 interface Env {
-  CACHE?: KVNamespace;
+  CACHE?: any;
   ETHERSCAN_API_KEY_1?: string;
   ETHERSCAN_API_KEY_2?: string;
   ETHERSCAN_API_KEY_3?: string;
@@ -14,7 +14,7 @@ interface Env {
 }
 
 export default {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: any): Promise<Response> {
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
