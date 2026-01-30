@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "deploy": "./deploy.sh"
+    "deploy": "./deploy.sh",
+    "test:scan": "tsx test/scan-contracts.ts"
   },
   "dependencies": {
     "framer-motion": "^12.29.2",
@@ -26,6 +27,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }

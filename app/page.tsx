@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { AnimatedBackground } from './components/AnimatedBackground';
 import { Footer } from './components/Footer';
 import { LoadingScreen } from './components/LoadingScreen';
@@ -12,12 +11,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '@/lib/constants';
 import { validateAddress as validateEthAddress } from '@/lib/validator';
 
+interface ScanResult {
+  address: string;
+  isHoneypot: boolean;
+  confidence: number;
+  patterns: Array<{ name: string; line: number; code: string }>;
+  chain: string;
+  message: string;
+}
+
 export default function Home() {
-  const router = useRouter();
   const [addresses, setAddresses] = useState(['', '', '']);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<string[]>(['', '', '']);
+  const [results, setResults] = useState<ScanResult[]>([]);
 
   const validateAddress = (address: string, index: number) => {
     if (!address.trim()) {
@@ -55,6 +63,7 @@ export default function Home() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setResults([]);
 
     const validAddresses = addresses.filter((a, i) => a.trim() && !validationErrors[i]);
     if (validAddresses.length === 0) {
@@ -64,21 +73,19 @@ export default function Home() {
     }
 
     try {
-      await Promise.all(
-        validAddresses.map(addr => 
-          fetch(API_URL, {
+      const scanResults = await Promise.all(
+        validAddresses.map(async (addr) => {
+          const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ address: addr }),
-          }).then(r => r.json())
-        )
+          });
+          const data = await response.json();
+          return { address: addr, ...data };
+        })
       );
 
-      if (validAddresses.length === 1) {
-        router.push(`/scan/${validAddresses[0]}`);
-      } else {
-        router.push(`/batch/${validAddresses.join(',')}`);
-      }
+      setResults(scanResults);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to scan contracts. Please try again.');
     } finally {
@@ -187,6 +194,72 @@ export default function Home() {
               >
                 <p className="font-medium">❌ Error</p>
                 <p className="text-sm mt-1">{error}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {results.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="mt-8 space-y-4"
+              >
+                {results.map((result, idx) => (
+                  <motion.div
+                    key={result.address}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                    className={`p-6 rounded-lg border-2 ${
+                      result.isHoneypot
+                        ? 'bg-red-900/30 border-red-500'
+                        : 'bg-green-900/30 border-green-500'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-white mb-1">
+                          {result.isHoneypot ? '🚨 HONEYPOT DETECTED' : '✅ SAFE CONTRACT'}
+                        </h3>
+                        <p className="text-sm text-gray-300 font-mono break-all">
+                          {result.address}
+                        </p>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                        result.isHoneypot ? 'bg-red-600 text-white' : 'bg-green-600 text-white'
+                      }`}>
+                        {result.confidence}% confidence
+                      </span>
+                    </div>
+
+                    <p className={`text-sm mb-4 ${
+                      result.isHoneypot ? 'text-red-200' : 'text-green-200'
+                    }`}>
+                      {result.message}
+                    </p>
+
+                    <div className="flex items-center gap-4 text-xs text-gray-400">
+                      <span className="capitalize">Chain: {result.chain}</span>
+                      {result.patterns.length > 0 && (
+                        <span>Patterns: {result.patterns.length}</span>
+                      )}
+                    </div>
+
+                    {result.patterns.length > 0 && (
+                      <div className="mt-4 bg-black/30 rounded p-3 space-y-2">
+                        <p className="text-xs font-bold text-red-300 uppercase">Detected Patterns:</p>
+                        {result.patterns.map((pattern, i) => (
+                          <div key={i} className="text-xs text-gray-300">
+                            <span className="font-mono text-red-400">{pattern.name}</span>
+                            <span className="text-gray-500"> (line {pattern.line})</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
               </motion.div>
             )}
           </AnimatePresence>
