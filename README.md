@@ -90,7 +90,7 @@ Business Source License 1.1 - see [LICENSE](LICENSE) file
 
 **Additional Use Grant**: Non-production use is free. Production use requires a commercial license.
 
-**Change Date**: 2029-01-30 (converts to MIT License)
+**Change Date**: 2030-01-30 (converts to MIT License)
 
 ## 👤 Author
 
