@@ -1,18 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export function AnimatedBackground() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
   useEffect(() => {
-    const canvas = document.createElement('canvas');
-    canvas.style.position = 'fixed';
-    canvas.style.top = '0';
-    canvas.style.left = '0';
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-    canvas.style.pointerEvents = 'none';
-    canvas.style.zIndex = '0';
-    document.body.prepend(canvas);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -43,7 +38,7 @@ export function AnimatedBackground() {
     let animationId: number;
 
     function animate() {
-      if (!ctx) return;
+      if (!ctx || !canvas) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       particles.forEach(p => {
@@ -76,9 +71,8 @@ export function AnimatedBackground() {
     return () => {
       cancelAnimationFrame(animationId);
       window.removeEventListener('resize', handleResize);
-      canvas.remove();
     };
   }, []);
 
-  return null;
+  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }} />;
 }

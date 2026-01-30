@@ -1,15 +1,29 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 
 export function AnimatedTagline({ text }: { text: string }) {
+  const [mounted, setMounted] = useState(false);
   const chars = text.split('');
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Render static content on server and initial client render to avoid hydration mismatch
+  if (!mounted) {
+    return (
+      <p className="text-base sm:text-lg text-gray-300 cursor-default group relative">
+        {text}
+      </p>
+    );
+  }
 
   return (
     <motion.p
       className="text-base sm:text-lg text-gray-300 cursor-default group relative"
-      initial="hidden"
-      animate="visible"
+      initial={false}
       whileHover={{
         scale: 1.05,
         textShadow: '0 0 20px rgba(59, 130, 246, 0.8), 0 0 40px rgba(59, 130, 246, 0.4)',

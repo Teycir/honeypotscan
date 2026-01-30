@@ -7,17 +7,14 @@ export function useTitleAnimation(text: string) {
   const listenersRef = useRef<Array<{ element: Element; type: string; handler: EventListener }>>([]);
 
   const cleanup = useCallback(() => {
-    // Clear any running intervals
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    // Clear any pending timeouts
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    // Remove all event listeners
     listenersRef.current.forEach(({ element, type, handler }) => {
       element.removeEventListener(type, handler);
     });
@@ -28,7 +25,6 @@ export function useTitleAnimation(text: string) {
     const titleEl = titleRef.current;
     if (!titleEl) return;
 
-    // Cleanup any previous animation state
     cleanup();
 
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()_+-=[]{}|;:,.<>?';
@@ -53,7 +49,6 @@ export function useTitleAnimation(text: string) {
         span.addEventListener('mouseenter', handleMouseEnter);
         span.addEventListener('mouseleave', handleMouseLeave);
         
-        // Store listeners for cleanup
         listenersRef.current.push(
           { element: span, type: 'mouseenter', handler: handleMouseEnter },
           { element: span, type: 'mouseleave', handler: handleMouseLeave }
@@ -86,7 +81,7 @@ export function useTitleAnimation(text: string) {
       }, 30);
     }
 
-    timeoutRef.current = setTimeout(scrambleText, 100);
+    timeoutRef.current = setTimeout(scrambleText, 500);
 
     return cleanup;
   }, [text, cleanup]);
