@@ -86,7 +86,11 @@ ETHERSCAN_API_KEY_6=your-key-6
 
 ## 📝 License
 
-MIT License - see [LICENSE](LICENSE) file
+Business Source License 1.1 - see [LICENSE](LICENSE) file
+
+**Additional Use Grant**: Non-production use is free. Production use requires a commercial license.
+
+**Change Date**: 2029-01-30 (converts to MIT License)
 
 ## 👤 Author
 
