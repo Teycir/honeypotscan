@@ -48,6 +48,8 @@ export default function Home() {
       }
 
       setResult(data);
+      // Redirect to dedicated result page
+      window.location.href = `/scan/${address}`;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to scan contract');
     } finally {
