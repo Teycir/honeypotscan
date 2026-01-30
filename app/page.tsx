@@ -7,7 +7,7 @@ import { Footer } from './components/Footer';
 import { LoadingScreen } from './components/LoadingScreen';
 import { CyclingFeatures } from './components/CyclingFeatures';
 import StackedTitle from './components/StackedTitle';
-import DecryptedText from './components/DecryptedText';
+import { AnimatedTagline } from './components/AnimatedTagline';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '@/lib/constants';
 
@@ -134,9 +134,7 @@ export default function Home() {
               </h1>
             </div>
 
-            <p className="text-xl sm:text-2xl text-gray-300">
-              Check if a token is a scam before you buy
-            </p>
+            <AnimatedTagline text="Check if a token is a scam before you buy" />
             <CyclingFeatures />
           </div>
 
