@@ -23,7 +23,7 @@ npm run build
 
 # Deploy
 echo "📦 Deploying to Cloudflare Pages..."
-npx wrangler pages deploy .next --project-name=honeypotscan
+npx wrangler pages deploy out --project-name=honeypotscan
 
 echo "✅ Deployment complete!"
 echo "🌐 Live at: https://honeypotscan.pages.dev"
