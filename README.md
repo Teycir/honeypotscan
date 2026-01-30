@@ -15,13 +15,13 @@ Free, fast, and accurate honeypot detection for Ethereum, Polygon, and Arbitrum 
 ## 🏗️ Architecture
 
 ```
-Next.js 14 (App Router)
+Next.js 15 (App Router)
     ↓
 Cloudflare Workers API
     ↓
-D1 Database (Cache)
+Cloudflare KV (Cache)
     ↓
-Rust Scanner (from SCPF)
+TypeScript Pattern Detector
     ↓
 Etherscan API (6 keys with rotation)
 ```
@@ -47,12 +47,15 @@ npm run deploy
 
 ## 📊 Detection Patterns
 
-- ✅ `tx.origin` abuse in ERC20 functions
-- ✅ Hidden fee functions
-- ✅ Transfer restrictions
-- ✅ Sell blocking logic
+- ✅ `tx.origin` abuse in balanceOf/allowance/transfer
+- ✅ Hidden fee functions (_taxPayer with tx.origin)
+- ✅ _isSuper helper with tx.origin
+- ✅ tx.origin in authentication (require/if/assert)
+- ✅ Sell blocking logic (_isSuper recipient check)
+- ✅ Asymmetric transfer restrictions
 - ✅ Whitelist-only transfers
 - ✅ Hidden sell taxes (95-100%)
+- ✅ Requires 2+ patterns for detection (high confidence)
 
 ## 🔧 Environment Variables
 
@@ -64,25 +67,28 @@ ETHERSCAN_API_KEY_3=your-key-3
 ETHERSCAN_API_KEY_4=your-key-4
 ETHERSCAN_API_KEY_5=your-key-5
 ETHERSCAN_API_KEY_6=your-key-6
+
+# Cloudflare (for deployment)
+CLOUDFLARE_ACCOUNT_ID=your-account-id
+CLOUDFLARE_API_TOKEN=your-api-token
 ```
 
 ## 📈 Scaling
 
 **Free Tier Capacity:**
 - 100k requests/day (Cloudflare Workers)
-- 5M database reads/day (D1)
+- 100k reads/day (Cloudflare KV)
 - 2.6M API calls/day (Etherscan)
-- **With 95% cache hit: 52M scans/day**
+- **With 95% cache hit: 2M scans/day**
 
 **Cost: $0/month** 🎉
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: Next.js 14, React, Tailwind CSS
+- **Frontend**: Next.js 15, React 19, Tailwind CSS v4
 - **Backend**: Cloudflare Workers
-- **Database**: Cloudflare D1 (SQLite)
 - **Cache**: Cloudflare KV
-- **Scanner**: Rust (from SmartContractPatternFinder)
+- **Scanner**: TypeScript (custom pattern detection)
 
 ## 📝 License
 

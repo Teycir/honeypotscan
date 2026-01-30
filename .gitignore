@@ -21,6 +21,8 @@ dist/
 .env.production.local
 .env.development.local
 .env.test.local
+.dev.vars
+worker/.dev.vars
 
 # Debug
 npm-debug.log*
