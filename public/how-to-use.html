@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>How to Use - HoneypotScan</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="icon" href="/favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <style>
     @keyframes gradientShift {
       0%, 100% { background-position: 0% 50%; }
@@ -31,6 +34,16 @@
       text-align: center;
       margin-bottom: 40px;
       animation: pulse-glow 8s ease-in-out infinite;
+      cursor: default;
+      user-select: none;
+    }
+    .title-char {
+      display: inline-block;
+      transition: all 0.1s ease-out;
+    }
+    .title-char:hover {
+      font-weight: 900;
+      text-shadow: 0 0 20px rgba(255, 255, 255, 1);
     }
     h2 {
       font-size: 24px;
@@ -125,7 +138,7 @@
   <canvas id="particles"></canvas>
   <div class="container">
     <a href="/" class="back-link">←</a>
-    <h1>How to Use HoneypotScan</h1>
+    <h1 id="title">How to Use HoneypotScan</h1>
     
     <h2>Quick Start</h2>
     
@@ -302,6 +315,41 @@
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     });
+
+    const titleEl = document.getElementById('title');
+    const titleText = titleEl.textContent;
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()_+-=[]{}|;:,.<>?';
+    
+    function scrambleText() {
+      let iteration = 0;
+      const maxIterations = 20;
+      const interval = setInterval(() => {
+        titleEl.textContent = titleText.split('').map((char, i) => {
+          if (char === ' ') return ' ';
+          if (iteration >= maxIterations) return char;
+          if (Math.random() < 0.1 * iteration) return char;
+          return chars[Math.floor(Math.random() * chars.length)];
+        }).join('');
+        
+        if (iteration >= maxIterations) {
+          titleEl.textContent = titleText;
+          clearInterval(interval);
+          wrapChars();
+        }
+        iteration++;
+      }, 30);
+    }
+
+    function wrapChars() {
+      titleEl.innerHTML = titleText.split('').map(char => 
+        `<span class="title-char">${char === ' ' ? '&nbsp;' : char}</span>`
+      ).join('');
+    }
+
+    setTimeout(scrambleText, 100);
   </script>
+  <style>
+    #title { animation: pulse-glow 8s ease-in-out infinite; }
+  </style>
 </body>
 </html>

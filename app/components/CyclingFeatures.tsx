@@ -33,12 +33,12 @@ export function CyclingFeatures() {
       <AnimatePresence mode="wait">
         <motion.div
           key={index}
-          style={{ fontSize: '11px', opacity: 0.9, fontWeight: 500, textAlign: 'center', width: '100%', maxWidth: '95%', lineHeight: 1.5, whiteSpace: 'pre-line' }}
+          style={{ fontSize: '11px', opacity: 0.9, fontWeight: 500, textAlign: 'center', width: '100%', maxWidth: '95%', lineHeight: 1.5, whiteSpace: 'pre-line', wordSpacing: 'normal' }}
         >
           {FEATURES[index].split('').map((char, i) => (
             <motion.span
               key={`${index}-${i}-${char}`}
-              className="inline-block"
+              style={{ whiteSpace: 'pre' }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -47,7 +47,7 @@ export function CyclingFeatures() {
                 delay: (FEATURES[index].length - 1 - i) * 0.02
               }}
             >
-              {char === ' ' ? '\u00A0' : char}
+              {char}
             </motion.span>
           ))}
         </motion.div>
