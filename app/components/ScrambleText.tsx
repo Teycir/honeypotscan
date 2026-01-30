@@ -18,7 +18,7 @@ export function ScrambleText({
   animateOnLoad = true,
 }: ScrambleTextProps) {
   const [displayText, setDisplayText] = useState(text);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasAnimatedRef = useRef(false);
 
   const scramble = useCallback(() => {

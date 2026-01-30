@@ -9,7 +9,7 @@ export const DEFAULT_CYBER_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*
 
 export class TextScrambler {
   private config: Required<TextAnimationConfig>;
-  private intervalId: NodeJS.Timeout | null = null;
+  private intervalId: ReturnType<typeof setInterval> | null = null;
 
   constructor(config: TextAnimationConfig = {}) {
     this.config = {
