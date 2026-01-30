@@ -66,6 +66,19 @@ export class TextScrambler {
   }
 }
 
+/**
+ * Creates a text reveal animation that progressively reveals characters
+ * 
+ * Animation Parameters:
+ * - duration: Time in seconds for the reveal animation
+ * - FPS: Animation runs at ~25 FPS (40ms interval) for smooth visual effect
+ *        This is intentionally lower than 60 FPS to reduce CPU usage while
+ *        maintaining a visually pleasing scramble effect
+ * - Total frames = duration * 25 (at 40ms per frame)
+ * 
+ * The animation resolves characters from left to right based on progress,
+ * with unresolved characters showing random scramble characters.
+ */
 export function createRevealAnimation(
   text: string,
   duration: number,
@@ -74,7 +87,14 @@ export function createRevealAnimation(
   return (onUpdate, onComplete) => {
     const length = text.length;
     let frame = 0;
-    const totalFrames = duration * 30;
+    
+    // Animation timing constants
+    const FRAME_INTERVAL_MS = 40; // 40ms = ~25 FPS (smooth enough for text scramble)
+    const FPS = 1000 / FRAME_INTERVAL_MS; // 25 FPS
+    const totalFrames = Math.ceil(duration * FPS);
+    
+    // Extra frames to hold final text before completing
+    const HOLD_FRAMES = 12;
 
     const intervalId = setInterval(() => {
       const progress = frame / totalFrames;
@@ -91,12 +111,12 @@ export function createRevealAnimation(
       onUpdate(output);
       frame++;
 
-      if (frame > totalFrames + 12) {
+      if (frame > totalFrames + HOLD_FRAMES) {
         onUpdate(text);
         clearInterval(intervalId);
         onComplete?.();
       }
-    }, 40);
+    }, FRAME_INTERVAL_MS);
 
     return () => clearInterval(intervalId);
   };

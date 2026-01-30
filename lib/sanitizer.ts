@@ -11,6 +11,73 @@ export interface SanitizeResult {
   };
 }
 
+/**
+ * Remove single-line comments while preserving string literals
+ * This prevents corrupting URLs like "https://example.com" which contain //
+ */
+function removeLineComments(code: string): string {
+  const result: string[] = [];
+  let i = 0;
+  
+  while (i < code.length) {
+    // Check for string literals (double quotes)
+    if (code[i] === '"') {
+      const start = i;
+      i++; // Skip opening quote
+      while (i < code.length && code[i] !== '"') {
+        if (code[i] === '\\' && i + 1 < code.length) {
+          i += 2; // Skip escaped character
+        } else {
+          i++;
+        }
+      }
+      i++; // Skip closing quote
+      result.push(code.substring(start, i));
+      continue;
+    }
+    
+    // Check for string literals (single quotes)
+    if (code[i] === "'") {
+      const start = i;
+      i++; // Skip opening quote
+      while (i < code.length && code[i] !== "'") {
+        if (code[i] === '\\' && i + 1 < code.length) {
+          i += 2; // Skip escaped character
+        } else {
+          i++;
+        }
+      }
+      i++; // Skip closing quote
+      result.push(code.substring(start, i));
+      continue;
+    }
+    
+    // Check for single-line comments
+    if (code[i] === '/' && code[i + 1] === '/') {
+      // Skip until end of line
+      while (i < code.length && code[i] !== '\n') {
+        i++;
+      }
+      continue;
+    }
+    
+    // Check for multi-line comments
+    if (code[i] === '/' && code[i + 1] === '*') {
+      i += 2; // Skip /*
+      while (i < code.length && !(code[i] === '*' && code[i + 1] === '/')) {
+        i++;
+      }
+      i += 2; // Skip */
+      continue;
+    }
+    
+    result.push(code[i]);
+    i++;
+  }
+  
+  return result.join('');
+}
+
 export function sanitizeContractCode(code: string): SanitizeResult {
   if (!code || typeof code !== 'string') {
     return {
@@ -24,11 +91,8 @@ export function sanitizeContractCode(code: string): SanitizeResult {
   // Normalize line endings
   let sanitized = code.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   
-  // Remove single-line comments (but preserve strings)
-  sanitized = sanitized.replace(/\/\/.*$/gm, '');
-  
-  // Remove multi-line comments
-  sanitized = sanitized.replace(/\/\*[\s\S]*?\*\//g, '');
+  // Remove comments while preserving string literals (prevents corrupting URLs)
+  sanitized = removeLineComments(sanitized);
   
   // Remove excessive blank lines (more than 2 consecutive)
   sanitized = sanitized.replace(/\n{3,}/g, '\n\n');

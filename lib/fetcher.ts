@@ -2,6 +2,20 @@ import { CHAIN_CONFIGS } from './patterns';
 import { parseSourceCode } from './parser';
 import type { Env } from '@/types';
 
+/**
+ * Fisher-Yates shuffle algorithm for unbiased randomization
+ * Math.random() - 0.5 sort is NOT uniformly random
+ * @see https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
+ */
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 export async function fetchContractSource(address: string, chain: string, env: Env): Promise<string> {
   const config = CHAIN_CONFIGS[chain];
   if (!config) throw new Error(`Unsupported chain: ${chain}`);
@@ -17,7 +31,8 @@ export async function fetchContractSource(address: string, chain: string, env: E
   
   if (keys.length === 0) throw new Error('No API keys configured');
   
-  const shuffled = keys.sort(() => Math.random() - 0.5);
+  // Use Fisher-Yates shuffle for unbiased key selection
+  const shuffled = shuffleArray(keys);
   
   let lastError: Error | null = null;
   
@@ -31,6 +46,13 @@ export async function fetchContractSource(address: string, chain: string, env: E
     
     try {
       const response = await fetch(url);
+      
+      // Check HTTP response status before parsing JSON
+      if (!response.ok) {
+        lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+        continue;
+      }
+      
       const data = await response.json();
       
       if (data.status !== '1') {

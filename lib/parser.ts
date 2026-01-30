@@ -22,8 +22,16 @@ export function parseSourceCode(sourceCode: string): string {
         }
         if (combined) return combined;
       }
-    } catch {
-      // Not JSON, return as-is
+    } catch (error) {
+      // Log JSON parse failures for debugging purposes
+      // This helps identify malformed source code responses from APIs
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('[parser] JSON parse failed for source code:', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          preview: cleaned.substring(0, 100) + '...',
+        });
+      }
+      // Not JSON or malformed JSON, return as-is
     }
   }
   

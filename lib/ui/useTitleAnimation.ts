@@ -7,6 +7,18 @@ export function useTitleAnimation(text: string) {
   const listenersRef = useRef<Array<{ element: Element; type: string; handler: EventListener }>>([]);
   const [isMounted, setIsMounted] = useState(false);
 
+  // Clean up event listeners from stored references
+  const cleanupListeners = useCallback(() => {
+    listenersRef.current.forEach(({ element, type, handler }) => {
+      try {
+        element.removeEventListener(type, handler);
+      } catch {
+        // Element may already be destroyed, ignore
+      }
+    });
+    listenersRef.current = [];
+  }, []);
+
   const cleanup = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -16,11 +28,8 @@ export function useTitleAnimation(text: string) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    listenersRef.current.forEach(({ element, type, handler }) => {
-      element.removeEventListener(type, handler);
-    });
-    listenersRef.current = [];
-  }, []);
+    cleanupListeners();
+  }, [cleanupListeners]);
 
   // Wait for hydration to complete before manipulating DOM
   useEffect(() => {
@@ -40,6 +49,10 @@ export function useTitleAnimation(text: string) {
     
     function wrapChars() {
       if (!titleEl) return;
+      
+      // Clean up any existing listeners before creating new elements
+      cleanupListeners();
+      
       titleEl.innerHTML = text.split('').map(char => 
         `<span class="title-char" style="display: inline-block; transition: all 0.1s ease-out;">${char === ' ' ? '&nbsp;' : char}</span>`
       ).join('');
@@ -67,10 +80,19 @@ export function useTitleAnimation(text: string) {
 
     function scrambleText() {
       if (!titleEl) return;
+      
+      // IMPORTANT: Clean up listeners before scramble animation starts
+      // The scramble animation uses textContent which destroys all child nodes
+      // Any existing event listeners would reference destroyed DOM nodes (memory leak)
+      cleanupListeners();
+      
       let iteration = 0;
       const maxIterations = 20;
       
       intervalRef.current = setInterval(() => {
+        // Using textContent here destroys all HTML structure
+        // This is intentional for the scramble effect, but we must ensure
+        // no event listeners are attached to child elements during this phase
         titleEl.textContent = text.split('').map((char) => {
           if (char === ' ') return ' ';
           if (iteration >= maxIterations) return char;
@@ -84,6 +106,7 @@ export function useTitleAnimation(text: string) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
           }
+          // Only attach event listeners AFTER scramble animation completes
           wrapChars();
         }
         iteration++;
@@ -93,7 +116,7 @@ export function useTitleAnimation(text: string) {
     timeoutRef.current = setTimeout(scrambleText, 500);
 
     return cleanup;
-  }, [text, cleanup, isMounted]);
+  }, [text, cleanup, cleanupListeners, isMounted]);
 
   return titleRef;
 }
