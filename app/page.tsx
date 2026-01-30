@@ -5,6 +5,7 @@ import { AnimatedBackground } from './components/AnimatedBackground';
 import { AnimatedTitle } from './components/AnimatedTitle';
 import { Footer } from './components/Footer';
 import { LoadingScreen } from './components/LoadingScreen';
+import { CyclingFeatures } from './components/CyclingFeatures';
 import { motion } from 'framer-motion';
 
 type Pattern = {
@@ -98,6 +99,7 @@ export default function Home() {
             <p className="text-sm text-gray-400 mt-2">
               Free • Fast • Accurate
             </p>
+            <CyclingFeatures />
           </div>
 
         {/* Scan Form */}

@@ -13,12 +13,49 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HoneypotScan - Free Crypto Scam Detection",
-  description: "Check if a token is a scam before you buy. Free, fast honeypot detection for Ethereum, Polygon, and Arbitrum.",
+  metadataBase: new URL('https://honeypotscan.pages.dev'),
+  title: {
+    default: "HoneypotScan - Free Crypto Scam Detection Tool",
+    template: "%s | HoneypotScan"
+  },
+  description: "Free honeypot detection for Ethereum, Polygon, and Arbitrum smart contracts. Scan tokens for scams before you buy. Instant results, 100% free, no API keys needed.",
+  keywords: ["honeypot scanner", "crypto scam detection", "token scanner", "smart contract analysis", "ethereum scanner", "polygon scanner", "arbitrum scanner", "rug pull detection", "crypto security", "token safety", "scam token", "honeypot detection"],
+  authors: [{ name: "Teycir Ben Soltane", url: "https://teycirbensoltane.tn" }],
+  creator: "Teycir Ben Soltane",
+  publisher: "HoneypotScan",
   icons: {
     icon: "/favicon.png",
     apple: "/favicon.png",
   },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://honeypotscan.pages.dev",
+    title: "HoneypotScan - Free Crypto Scam Detection Tool",
+    description: "Free honeypot detection for Ethereum, Polygon, and Arbitrum. Scan tokens for scams before you buy. Instant results, 100% free.",
+    siteName: "HoneypotScan",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HoneypotScan - Free Crypto Scam Detection",
+    description: "Free honeypot detection for Ethereum, Polygon, and Arbitrum. Scan tokens before you buy.",
+    creator: "@HoneypotScan"
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: "https://honeypotscan.pages.dev"
+  },
+  category: "Security",
 };
 
 export default function RootLayout({
@@ -27,9 +64,44 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              "name": "HoneypotScan",
+              "applicationCategory": "SecurityApplication",
+              "operatingSystem": "Web Browser",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+              },
+              "description": "Free honeypot detection tool for Ethereum, Polygon, and Arbitrum smart contracts. Scans for malicious patterns before you invest.",
+              "url": "https://honeypotscan.pages.dev",
+              "author": {
+                "@type": "Person",
+                "name": "Teycir Ben Soltane",
+                "url": "https://teycirbensoltane.tn"
+              },
+              "featureList": [
+                "tx.origin Detection",
+                "Hidden Fee Scanner",
+                "Transfer Restrictions",
+                "Multi-chain Support",
+                "Instant Results",
+                "100% Free"
+              ]
+            })
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
         {children}
       </body>
