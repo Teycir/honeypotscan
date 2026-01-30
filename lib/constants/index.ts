@@ -1,8 +1,8 @@
 import { config } from '../config';
 
-export const API_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-  ? config.api.local
-  : config.api.production;
+// Always use production API - local worker development requires wrangler dev running
+// For local testing, we can use the deployed worker
+export const API_URL = config.api.production;
 
 export const SCAN_CONFIDENCE = {
   HONEYPOT: config.scan.confidence.honeypot,

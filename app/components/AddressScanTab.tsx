@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '@/lib/constants';
 import { validateAddress as validateEthAddress } from '@/lib/validator';
@@ -12,7 +12,22 @@ interface ScanResult {
   patterns: Array<{ name: string; line: number; code: string }>;
   chain: string;
   message: string;
+  error?: string;
 }
+
+interface ScanProgress {
+  current: number;
+  total: number;
+  currentAddress: string;
+}
+
+const ETHERSCAN_URLS: Record<string, string> = {
+  ethereum: 'https://etherscan.io/address/',
+  polygon: 'https://polygonscan.com/address/',
+  arbitrum: 'https://arbiscan.io/address/',
+};
+
+const SCAN_TIMEOUT = 30000; // 30 seconds per address
 
 export function AddressScanTab() {
   const [addresses, setAddresses] = useState(['', '', '']);
@@ -20,39 +35,126 @@ export function AddressScanTab() {
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<string[]>(['', '', '']);
   const [results, setResults] = useState<ScanResult[]>([]);
+  const [progress, setProgress] = useState<ScanProgress | null>(null);
+  const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
 
-  const validateAddress = (address: string, index: number) => {
+  const validateAddress = useCallback((address: string, index: number) => {
     if (!address.trim()) {
-      const newErrors = [...validationErrors];
-      newErrors[index] = '';
-      setValidationErrors(newErrors);
+      setValidationErrors(prev => {
+        const newErrors = [...prev];
+        newErrors[index] = '';
+        return newErrors;
+      });
       return;
     }
 
-    const newErrors = [...validationErrors];
-    const validation = validateEthAddress(address.trim());
-    newErrors[index] = validation.valid ? '' : (validation.error || 'Invalid address');
-    setValidationErrors(newErrors);
-  };
+    setValidationErrors(prev => {
+      const newErrors = [...prev];
+      const validation = validateEthAddress(address.trim());
+      newErrors[index] = validation.valid ? '' : (validation.error || 'Invalid address');
+      return newErrors;
+    });
+  }, []);
 
-  const handleAddressChange = (value: string, index: number) => {
+  const handleAddressChange = useCallback((value: string, index: number) => {
     const trimmed = value.trim();
-    const newAddrs = [...addresses];
-    newAddrs[index] = trimmed;
-    setAddresses(newAddrs);
+    setAddresses(prev => {
+      const newAddrs = [...prev];
+      newAddrs[index] = trimmed;
+      return newAddrs;
+    });
     validateAddress(trimmed, index);
-  };
+  }, [validateAddress]);
 
-  const handleClearAll = () => {
+  const handleClearAll = useCallback(() => {
     setAddresses(['', '', '']);
     setValidationErrors(['', '', '']);
     setError('');
     setResults([]);
-  };
+    setProgress(null);
+  }, []);
+
+  const handleCopyAddress = useCallback(async (address: string) => {
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopiedAddress(address);
+      setTimeout(() => setCopiedAddress(null), 2000);
+    } catch {
+      // Clipboard API not available
+    }
+  }, []);
 
   const hasValidAddresses = addresses.some((addr, i) => 
     addr.trim() && !validationErrors[i]
   );
+
+  const scanSingleAddress = async (addr: string, signal: AbortSignal): Promise<ScanResult> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), SCAN_TIMEOUT);
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: addr }),
+        signal: signal.aborted ? signal : controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return {
+          address: addr,
+          isHoneypot: false,
+          confidence: 0,
+          patterns: [],
+          chain: 'unknown',
+          message: '',
+          error: errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+        };
+      }
+
+      const data = await response.json();
+      return { address: addr, ...data };
+    } catch (err) {
+      clearTimeout(timeoutId);
+      
+      if (err instanceof Error) {
+        if (err.name === 'AbortError') {
+          return {
+            address: addr,
+            isHoneypot: false,
+            confidence: 0,
+            patterns: [],
+            chain: 'unknown',
+            message: '',
+            error: 'Request timed out. Please try again.',
+          };
+        }
+        return {
+          address: addr,
+          isHoneypot: false,
+          confidence: 0,
+          patterns: [],
+          chain: 'unknown',
+          message: '',
+          error: err.message === 'Failed to fetch' 
+            ? 'Network error. Please check your connection.' 
+            : err.message,
+        };
+      }
+      return {
+        address: addr,
+        isHoneypot: false,
+        confidence: 0,
+        patterns: [],
+        chain: 'unknown',
+        message: '',
+        error: 'An unexpected error occurred.',
+      };
+    }
+  };
 
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,28 +169,36 @@ export function AddressScanTab() {
       return;
     }
 
-    try {
-      const scanResults = await Promise.all(
-        validAddresses.map(async (addr) => {
-          const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ address: addr }),
-          });
-          const data = await response.json();
-          return { address: addr, ...data };
-        })
-      );
+    const abortController = new AbortController();
+    const scanResults: ScanResult[] = [];
 
-      setResults(scanResults);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to scan contracts. Please try again.');
+    try {
+      for (let i = 0; i < validAddresses.length; i++) {
+        const addr = validAddresses[i];
+        setProgress({
+          current: i + 1,
+          total: validAddresses.length,
+          currentAddress: addr,
+        });
+
+        const result = await scanSingleAddress(addr, abortController.signal);
+        scanResults.push(result);
+        
+        // Update results progressively
+        setResults([...scanResults]);
+      }
+    } catch {
+      setError('Scan was interrupted. Please try again.');
     } finally {
       setLoading(false);
+      setProgress(null);
     }
   };
 
   const filledCount = addresses.filter(a => a.trim()).length;
+  const successfulResults = results.filter(r => !r.error);
+  const honeypotCount = successfulResults.filter(r => r.isHoneypot).length;
+  const safeCount = successfulResults.filter(r => !r.isHoneypot).length;
 
   return (
     <div role="tabpanel" id="panel-address" aria-labelledby="tab-address">
@@ -110,34 +220,57 @@ export function AddressScanTab() {
           </div>
           {addresses.map((addr, i) => {
             const isValid = addr.trim() && !validationErrors[i];
+            const hasError = !!validationErrors[i];
             
             return (
-              <div key={i} className="relative">
+              <div key={i} className="relative group">
                 <input
                   type="text"
                   value={addr}
                   onChange={(e) => handleAddressChange(e.target.value, i)}
                   placeholder={`Contract ${i + 1}: 0x...`}
-                  className={`w-full px-3 py-2 pr-10 bg-gray-700 text-white text-sm rounded-lg focus:ring-2 outline-none transition-all ${
-                    validationErrors[i] 
+                  disabled={loading}
+                  className={`w-full px-3 py-2.5 pr-20 bg-gray-700/80 text-white text-sm rounded-lg focus:ring-2 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                    hasError 
                       ? 'border border-red-500 focus:ring-red-500' 
                       : isValid
                       ? 'border border-green-500 focus:ring-green-500'
-                      : 'focus:ring-blue-500'
+                      : 'border border-transparent focus:ring-blue-500 hover:border-gray-600'
                   }`}
+                  aria-invalid={hasError}
+                  aria-describedby={hasError ? `error-${i}` : undefined}
                 />
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                  {isValid && <span className="text-green-400 text-sm">✓</span>}
+                  {isValid && (
+                    <>
+                      <span className="text-green-400 text-sm" title="Valid address">✓</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyAddress(addr)}
+                        className="text-gray-400 hover:text-blue-400 transition text-xs p-1 opacity-0 group-hover:opacity-100"
+                        title="Copy address"
+                      >
+                        {copiedAddress === addr ? '✓' : '📋'}
+                      </button>
+                    </>
+                  )}
                   {addr && (
                     <button
                       type="button"
                       onClick={() => handleAddressChange('', i)}
-                      className="text-gray-400 hover:text-white transition text-sm"
+                      disabled={loading}
+                      className="text-gray-400 hover:text-white transition text-sm p-1 disabled:opacity-50"
+                      title="Clear"
                     >
                       ✕
                     </button>
                   )}
                 </div>
+                {hasError && (
+                  <p id={`error-${i}`} className="text-xs text-red-400 mt-1 ml-1">
+                    {validationErrors[i]}
+                  </p>
+                )}
               </div>
             );
           })}
@@ -155,10 +288,19 @@ export function AddressScanTab() {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              Scanning...
+              {progress ? (
+                <span>Scanning {progress.current}/{progress.total}...</span>
+              ) : (
+                <span>Scanning...</span>
+              )}
             </>
           ) : (
-            'Scan'
+            <>
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              Scan {filledCount > 0 ? `(${filledCount})` : ''}
+            </>
           )}
         </button>
       </form>
@@ -170,8 +312,11 @@ export function AddressScanTab() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             className="mt-6 bg-red-900/50 border border-red-500 text-red-200 px-6 py-4 rounded-lg"
+            role="alert"
           >
-            <p className="font-medium">❌ Error</p>
+            <p className="font-medium flex items-center gap-2">
+              <span>❌</span> Error
+            </p>
             <p className="text-sm mt-1">{error}</p>
           </motion.div>
         )}
@@ -185,6 +330,27 @@ export function AddressScanTab() {
             exit={{ opacity: 0, y: 20 }}
             className="mt-8 space-y-4"
           >
+            {/* Summary Banner */}
+            {successfulResults.length > 1 && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center justify-center gap-4 p-3 bg-gray-800/50 rounded-lg text-sm"
+              >
+                <span className="text-gray-400">Results:</span>
+                {honeypotCount > 0 && (
+                  <span className="text-red-400 font-medium">
+                    🚨 {honeypotCount} Honeypot{honeypotCount > 1 ? 's' : ''}
+                  </span>
+                )}
+                {safeCount > 0 && (
+                  <span className="text-green-400 font-medium">
+                    ✅ {safeCount} Safe
+                  </span>
+                )}
+              </motion.div>
+            )}
+
             {results.map((result, idx) => (
               <motion.div
                 key={result.address}
@@ -192,50 +358,125 @@ export function AddressScanTab() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.1 }}
                 className={`p-6 rounded-lg border-2 ${
-                  result.isHoneypot
+                  result.error
+                    ? 'bg-yellow-900/20 border-yellow-500/50'
+                    : result.isHoneypot
                     ? 'bg-red-900/30 border-red-500'
                     : 'bg-green-900/30 border-green-500'
                 }`}
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-white mb-1">
-                      {result.isHoneypot ? '🚨 HONEYPOT DETECTED' : '✅ SAFE CONTRACT'}
-                    </h3>
-                    <p className="text-sm text-gray-300 font-mono break-all">
+                {result.error ? (
+                  // Error state
+                  <div>
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-lg font-bold text-yellow-400 flex items-center gap-2">
+                        <span>⚠️</span> Scan Failed
+                      </h3>
+                    </div>
+                    <p className="text-sm text-gray-300 font-mono break-all mb-2">
                       {result.address}
                     </p>
+                    <p className="text-sm text-yellow-200">{result.error}</p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                    result.isHoneypot ? 'bg-red-600 text-white' : 'bg-green-600 text-white'
-                  }`}>
-                    {result.confidence}% confidence
-                  </span>
-                </div>
-
-                <p className={`text-sm mb-4 ${
-                  result.isHoneypot ? 'text-red-200' : 'text-green-200'
-                }`}>
-                  {result.message}
-                </p>
-
-                <div className="flex items-center gap-4 text-xs text-gray-400">
-                  <span className="capitalize">Chain: {result.chain}</span>
-                  {result.patterns.length > 0 && (
-                    <span>Patterns: {result.patterns.length}</span>
-                  )}
-                </div>
-
-                {result.patterns.length > 0 && (
-                  <div className="mt-4 bg-black/30 rounded p-3 space-y-2">
-                    <p className="text-xs font-bold text-red-300 uppercase">Detected Patterns:</p>
-                    {result.patterns.map((pattern, i) => (
-                      <div key={i} className="text-xs text-gray-300">
-                        <span className="font-mono text-red-400">{pattern.name}</span>
-                        <span className="text-gray-500"> (line {pattern.line})</span>
+                ) : (
+                  // Success state
+                  <>
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                          {result.isHoneypot ? (
+                            <>
+                              <span className="text-2xl">🚨</span>
+                              <span className="text-red-400">HONEYPOT DETECTED</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-2xl">✅</span>
+                              <span className="text-green-400">SAFE CONTRACT</span>
+                            </>
+                          )}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-gray-300 font-mono break-all">
+                            {result.address}
+                          </p>
+                          <button
+                            onClick={() => handleCopyAddress(result.address)}
+                            className="text-gray-400 hover:text-blue-400 transition text-xs shrink-0"
+                            title="Copy address"
+                          >
+                            {copiedAddress === result.address ? '✓' : '📋'}
+                          </button>
+                          {ETHERSCAN_URLS[result.chain] && (
+                            <a
+                              href={`${ETHERSCAN_URLS[result.chain]}${result.address}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-gray-400 hover:text-blue-400 transition text-xs shrink-0"
+                              title="View on Explorer"
+                            >
+                              🔗
+                            </a>
+                          )}
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold shrink-0 ${
+                        result.isHoneypot ? 'bg-red-600 text-white' : 'bg-green-600 text-white'
+                      }`}>
+                        {result.confidence}% confidence
+                      </span>
+                    </div>
+
+                    <p className={`text-sm mb-4 ${
+                      result.isHoneypot ? 'text-red-200' : 'text-green-200'
+                    }`}>
+                      {result.message}
+                    </p>
+
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400">
+                      <span className="bg-gray-700/50 px-2 py-1 rounded capitalize">
+                        Chain: {result.chain}
+                      </span>
+                      {result.patterns.length > 0 && (
+                        <span className="bg-red-900/30 text-red-300 px-2 py-1 rounded">
+                          {result.patterns.length} Pattern{result.patterns.length > 1 ? 's' : ''} Found
+                        </span>
+                      )}
+                    </div>
+
+                    {result.patterns.length > 0 && (
+                      <details className="mt-4">
+                        <summary className="cursor-pointer text-xs font-bold text-red-300 uppercase hover:text-red-200 transition">
+                          View Detected Patterns ({result.patterns.length})
+                        </summary>
+                        <div className="mt-3 bg-black/30 rounded p-3 space-y-2">
+                          {result.patterns.map((pattern, i) => (
+                            <div key={i} className="text-xs text-gray-300 flex items-start gap-2">
+                              <span className="text-red-400">•</span>
+                              <div>
+                                <span className="font-mono text-red-400">{pattern.name}</span>
+                                <span className="text-gray-500 ml-2">(line {pattern.line})</span>
+                                {pattern.code && (
+                                  <pre className="mt-1 text-gray-500 text-[10px] overflow-x-auto max-w-full">
+                                    {pattern.code.substring(0, 80)}...
+                                  </pre>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
+
+                    {result.isHoneypot && (
+                      <div className="mt-4 p-3 bg-red-900/30 border border-red-500/30 rounded-lg">
+                        <p className="text-xs text-red-200 font-medium">
+                          ⚠️ <strong>Warning:</strong> This contract contains patterns commonly found in honeypot scams. 
+                          Do not buy or interact with this token.
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </motion.div>
             ))}
