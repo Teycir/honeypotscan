@@ -1,28 +1,23 @@
+import { keccak_256 } from '@noble/hashes/sha3.js';
 import { CHAIN_CONFIGS } from './patterns';
 import { SECURITY_LIMITS } from './constants';
 
 /**
  * Compute keccak256 hash for EIP-55 checksum validation
- * Uses Web Crypto API (available in browsers and Cloudflare Workers)
+ * Uses @noble/hashes for proper keccak256 implementation
  */
-async function keccak256(message: string): Promise<string> {
-  // For environments without native keccak256, we use a simple implementation
-  // Note: In production with ethers.js or web3.js, use their keccak256
+function keccak256(message: string): string {
   const encoder = new TextEncoder();
   const data = encoder.encode(message);
-  
-  // Use SHA-256 as a fallback approximation for format validation
-  // Real keccak256 would require a crypto library
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const hash = keccak_256(data);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 /**
  * Validate EIP-55 checksum for Ethereum addresses
  * Returns true if address has valid checksum or is all lowercase/uppercase
  */
-export async function validateAddressChecksum(address: string): Promise<boolean> {
+export function validateAddressChecksum(address: string): boolean {
   // Remove 0x prefix for processing
   const addr = address.slice(2);
   
@@ -31,15 +26,22 @@ export async function validateAddressChecksum(address: string): Promise<boolean>
     return true;
   }
   
-  // Compute checksum
-  const hash = await keccak256(addr.toLowerCase());
+  // Compute checksum using proper keccak256
+  const hash = keccak256(addr.toLowerCase());
   
   for (let i = 0; i < 40; i++) {
-    const hashChar = parseInt(hash[i], 16);
+    const hashChar = hash[i];
     const addrChar = addr[i];
     
+    // Safety check for undefined (shouldn't happen with valid input)
+    if (hashChar === undefined || addrChar === undefined) {
+      return false;
+    }
+    
+    const hashValue = parseInt(hashChar, 16);
+    
     // If hash char >= 8, address char should be uppercase
-    if (hashChar >= 8) {
+    if (hashValue >= 8) {
       if (addrChar !== addrChar.toUpperCase()) {
         return false;
       }
@@ -81,9 +83,9 @@ export function validateAddress(address: string): { valid: boolean; error?: stri
 }
 
 /**
- * Full address validation with checksum (async)
+ * Full address validation with checksum (sync now with proper keccak256)
  */
-export async function validateAddressFull(address: string): Promise<{ valid: boolean; error?: string }> {
+export function validateAddressFull(address: string): { valid: boolean; error?: string } {
   // First do basic validation
   const basicResult = validateAddress(address);
   if (!basicResult.valid) {
@@ -91,7 +93,7 @@ export async function validateAddressFull(address: string): Promise<{ valid: boo
   }
   
   // Then validate checksum
-  const checksumValid = await validateAddressChecksum(address.trim());
+  const checksumValid = validateAddressChecksum(address.trim());
   if (!checksumValid) {
     return { valid: false, error: 'Invalid address checksum' };
   }

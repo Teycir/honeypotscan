@@ -22,8 +22,14 @@ function removeLineComments(code: string): string {
   let i = 0;
   
   while (i < code.length) {
+    const char = code[i];
+    const nextChar = code[i + 1];
+    
+    // Safety check (shouldn't happen with proper loop condition)
+    if (char === undefined) break;
+    
     // Check for string literals (double quotes)
-    if (code[i] === '"') {
+    if (char === '"') {
       const start = i;
       i++; // Skip opening quote
       while (i < code.length && code[i] !== '"') {
@@ -39,7 +45,7 @@ function removeLineComments(code: string): string {
     }
     
     // Check for string literals (single quotes)
-    if (code[i] === "'") {
+    if (char === "'") {
       const start = i;
       i++; // Skip opening quote
       while (i < code.length && code[i] !== "'") {
@@ -55,7 +61,7 @@ function removeLineComments(code: string): string {
     }
     
     // Check for single-line comments
-    if (code[i] === '/' && code[i + 1] === '/') {
+    if (char === '/' && nextChar === '/') {
       // Skip until end of line
       while (i < code.length && code[i] !== '\n') {
         i++;
@@ -64,7 +70,7 @@ function removeLineComments(code: string): string {
     }
     
     // Check for multi-line comments
-    if (code[i] === '/' && code[i + 1] === '*') {
+    if (char === '/' && nextChar === '*') {
       i += 2; // Skip /*
       while (i < code.length && !(code[i] === '*' && code[i + 1] === '/')) {
         i++;
@@ -73,7 +79,7 @@ function removeLineComments(code: string): string {
       continue;
     }
     
-    result.push(code[i]);
+    result.push(char);
     i++;
   }
   

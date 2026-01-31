@@ -10,7 +10,7 @@ function loadEnv() {
     const envContent = readFileSync(envPath, "utf-8");
     envContent.split("\n").forEach((line) => {
       const match = line.match(/^([^=:#]+)=(.*)$/);
-      if (match) {
+      if (match && match[1] && match[2]) {
         const key = match[1].trim();
         const value = match[2].trim();
         if (key && !process.env[key]) {
@@ -18,7 +18,7 @@ function loadEnv() {
         }
       }
     });
-  } catch (error) {
+  } catch {
     // .env.local not found, continue
   }
 }
@@ -77,6 +77,8 @@ async function scanContracts(
 
   for (let i = 0; i < contracts.length; i++) {
     const address = contracts[i];
+    if (!address) continue;
+    
     console.log(`\n[${i + 1}/${contracts.length}] Scanning: ${address}`);
 
     try {

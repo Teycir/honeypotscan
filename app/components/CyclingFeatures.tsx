@@ -98,16 +98,18 @@ export function CyclingFeatures() {
     return (
       <div style={{ minHeight: '40px', marginTop: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', padding: '0 16px' }}>
         <div style={{ fontSize: '11px', opacity: 0.9, fontWeight: 500, textAlign: 'center', width: '100%', maxWidth: '95%', lineHeight: 1.5, whiteSpace: 'pre-line', wordSpacing: 'normal' }}>
-          {FEATURES[0]}
+          {FEATURES[0] ?? ''}
         </div>
       </div>
     );
   }
 
+  const currentFeature = FEATURES[index] ?? FEATURES[0] ?? '';
+  
   return (
     <div style={{ minHeight: '40px', marginTop: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', padding: '0 16px' }}>
       <AnimatePresence mode="wait">
-        <FeatureDisplay text={FEATURES[index]} index={index} />
+        <FeatureDisplay text={currentFeature} index={index} />
       </AnimatePresence>
     </div>
   );

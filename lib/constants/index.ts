@@ -14,11 +14,28 @@ export const CACHE_TTL = {
   ONE_WEEK: config.cache.ttl.oneWeek,
 } as const;
 
-export const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-} as const;
+// Allowed origins for CORS - restrict to specific domains
+export const ALLOWED_ORIGINS = [
+  'https://honeypotscan.com',
+  'https://www.honeypotscan.com',
+  'https://honeypotscan.pages.dev',
+  'http://localhost:3000',
+] as const;
+
+// Default CORS headers factory
+export function createCorsHeaders(origin?: string | null): Record<string, string> {
+  // Check if the origin is in the allowed list
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin as typeof ALLOWED_ORIGINS[number])
+    ? origin
+    : ALLOWED_ORIGINS[0]; // Default to primary domain
+  
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Vary': 'Origin', // Important for caching with dynamic CORS
+  };
+}
 
 export const CACHE_CONTROL_HEADERS = {
   'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800',

@@ -5,9 +5,10 @@ import { detectChain } from "../lib/chain-detector";
 import {
   SCAN_CONFIDENCE,
   CACHE_TTL,
-  CORS_HEADERS,
   CACHE_CONTROL_HEADERS,
   SECURITY_LIMITS,
+  createCorsHeaders,
+  ALLOWED_ORIGINS,
 } from "../lib/constants";
 import type { Env } from "../types";
 
@@ -15,7 +16,10 @@ import type { Env } from "../types";
 const DETECTION_VERSION = "v2";
 
 // In-memory rate limiting store (per worker instance)
-// Note: For distributed rate limiting, use Cloudflare's Rate Limiting or KV
+// Note: For distributed rate limiting across multiple edge locations,
+// consider using Cloudflare's Rate Limiting product or KV with TTL.
+// This in-memory approach works for single-instance testing but won't
+// share state across different edge locations in production.
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 interface ScanRequest {
@@ -23,21 +27,54 @@ interface ScanRequest {
   skipCache?: boolean;
 }
 
+/**
+ * Structured logging helper for consistent log format
+ */
+interface LogEntry {
+  level: 'info' | 'warn' | 'error';
+  message: string;
+  metadata?: Record<string, unknown>;
+  timestamp: string;
+}
+
+function log(level: LogEntry['level'], message: string, metadata?: Record<string, unknown>): void {
+  const entry: LogEntry = {
+    level,
+    message,
+    metadata,
+    timestamp: new Date().toISOString(),
+  };
+  
+  if (level === 'error') {
+    console.error(JSON.stringify(entry));
+  } else if (level === 'warn') {
+    console.warn(JSON.stringify(entry));
+  } else {
+    console.log(JSON.stringify(entry));
+  }
+}
+
 function createJsonResponse(
   data: unknown,
   status = 200,
+  corsHeaders: Record<string, string>,
   withCache = false,
 ): Response {
   const headers = {
-    ...CORS_HEADERS,
+    ...corsHeaders,
     "Content-Type": "application/json",
     ...(withCache ? CACHE_CONTROL_HEADERS : {}),
   };
   return new Response(JSON.stringify(data), { status, headers });
 }
 
-function createErrorResponse(message: string, status = 500, code?: string): Response {
-  return createJsonResponse({ error: message, code }, status);
+function createErrorResponse(
+  message: string, 
+  status = 500, 
+  corsHeaders: Record<string, string>,
+  code?: string
+): Response {
+  return createJsonResponse({ error: message, code }, status, corsHeaders);
 }
 
 function sanitizeAddress(address: string): string {
@@ -101,14 +138,29 @@ function checkRateLimit(clientIP: string): { allowed: boolean; remaining: number
   };
 }
 
+/**
+ * Validate origin against allowed list
+ */
+function isOriginAllowed(origin: string | null): boolean {
+  if (!origin) return false;
+  return ALLOWED_ORIGINS.includes(origin as typeof ALLOWED_ORIGINS[number]);
+}
+
 const worker = {
   async fetch(
     request: Request,
     env: Env,
   ): Promise<Response> {
+    const origin = request.headers.get('Origin');
+    const corsHeaders = createCorsHeaders(origin);
+    
     // Handle CORS preflight
     if (request.method === "OPTIONS") {
-      return new Response(null, { headers: CORS_HEADERS });
+      // For preflight, check if origin is allowed
+      if (origin && !isOriginAllowed(origin)) {
+        log('warn', 'CORS preflight from unauthorized origin', { origin });
+      }
+      return new Response(null, { headers: corsHeaders });
     }
 
     // Only allow POST requests
@@ -116,6 +168,7 @@ const worker = {
       return createErrorResponse(
         "Method not allowed. Use POST with JSON body.",
         405,
+        corsHeaders,
         "METHOD_NOT_ALLOWED"
       );
     }
@@ -125,9 +178,11 @@ const worker = {
     const rateLimit = checkRateLimit(clientIP);
     
     if (!rateLimit.allowed) {
+      log('warn', 'Rate limit exceeded', { clientIP, resetIn: rateLimit.resetIn });
       const response = createErrorResponse(
         `Rate limit exceeded. Please try again in ${Math.ceil(rateLimit.resetIn / 1000)} seconds.`,
         429,
+        corsHeaders,
         "RATE_LIMIT_EXCEEDED"
       );
       // Add rate limit headers
@@ -144,6 +199,7 @@ const worker = {
       return createErrorResponse(
         "Content-Type must be application/json",
         400,
+        corsHeaders,
         "INVALID_CONTENT_TYPE"
       );
     }
@@ -154,6 +210,7 @@ const worker = {
       return createErrorResponse(
         `Request body too large (max ${Math.round(SECURITY_LIMITS.MAX_REQUEST_BODY_SIZE / 1024)}KB)`,
         413,
+        corsHeaders,
         "REQUEST_TOO_LARGE"
       );
     }
@@ -167,6 +224,7 @@ const worker = {
         return createErrorResponse(
           "Failed to read request body",
           400,
+          corsHeaders,
           "BODY_READ_ERROR"
         );
       }
@@ -176,6 +234,7 @@ const worker = {
         return createErrorResponse(
           `Request body too large (max ${Math.round(SECURITY_LIMITS.MAX_REQUEST_BODY_SIZE / 1024)}KB)`,
           413,
+          corsHeaders,
           "REQUEST_TOO_LARGE"
         );
       }
@@ -187,6 +246,7 @@ const worker = {
         return createErrorResponse(
           "Invalid JSON in request body",
           400,
+          corsHeaders,
           "INVALID_JSON"
         );
       }
@@ -198,6 +258,7 @@ const worker = {
         return createErrorResponse(
           "Address is required",
           400,
+          corsHeaders,
           "MISSING_ADDRESS"
         );
       }
@@ -208,29 +269,37 @@ const worker = {
         return createErrorResponse(
           addressValidation.error || "Invalid address format",
           400,
+          corsHeaders,
           "INVALID_ADDRESS"
         );
       }
 
       const normalizedAddress = sanitizeAddress(address);
       
+      log('info', 'Scanning address', { address: normalizedAddress, clientIP });
+      
       // Detect which chain the contract is on
       let chain: string | null;
       try {
         chain = await detectChain(normalizedAddress, env);
       } catch (error) {
-        console.error("Chain detection error:", error);
+        log('error', 'Chain detection error', { 
+          address: normalizedAddress, 
+          error: error instanceof Error ? error.message : 'Unknown' 
+        });
         return createErrorResponse(
           "Failed to detect contract chain. Please try again.",
           503,
+          corsHeaders,
           "CHAIN_DETECTION_FAILED"
         );
       }
 
       if (!chain) {
         return createErrorResponse(
-          "Contract not found on supported chains (Ethereum, Polygon, Arbitrum)",
+          "Contract not found on supported chains (Ethereum, Polygon, Arbitrum). Please verify the address is correct and the contract is deployed.",
           404,
+          corsHeaders,
           "CONTRACT_NOT_FOUND"
         );
       }
@@ -243,10 +312,13 @@ const worker = {
         try {
           const cached = await env.CACHE.get(cacheKey, "json");
           if (cached) {
-            return createJsonResponse({ ...cached as object, cached: true }, 200, true);
+            log('info', 'Cache hit', { address: normalizedAddress, chain });
+            return createJsonResponse({ ...cached as object, cached: true }, 200, corsHeaders, true);
           }
         } catch (cacheError) {
-          console.error("Cache read error:", cacheError);
+          log('error', 'Cache read error', { 
+            error: cacheError instanceof Error ? cacheError.message : 'Unknown' 
+          });
           // Continue without cache on error
         }
       }
@@ -257,33 +329,43 @@ const worker = {
         source = await fetchContractSource(normalizedAddress, chain, env);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        console.error("Source fetch error:", errorMessage);
+        log('error', 'Source fetch error', { address: normalizedAddress, chain, error: errorMessage });
         
         if (errorMessage.includes("not verified") || errorMessage.includes("not found")) {
           return createErrorResponse(
-            "Contract source code is not verified on block explorer",
+            "Contract source code is not verified on block explorer. Only verified contracts can be scanned.",
             404,
+            corsHeaders,
             "SOURCE_NOT_VERIFIED"
           );
         }
         
         return createErrorResponse(
-          "Failed to fetch contract source code. Please try again.",
+          "Failed to fetch contract source code. Please try again later.",
           503,
+          corsHeaders,
           "SOURCE_FETCH_FAILED"
         );
       }
 
       if (!source || source.trim().length === 0) {
         return createErrorResponse(
-          "Contract source code not available or not verified",
+          "Contract source code not available or not verified on the block explorer.",
           404,
+          corsHeaders,
           "SOURCE_NOT_AVAILABLE"
         );
       }
 
       // Perform honeypot detection
       const { isHoneypot, patterns } = detectHoneypot(source);
+      
+      log('info', 'Scan completed', { 
+        address: normalizedAddress, 
+        chain, 
+        isHoneypot, 
+        patternCount: patterns.length 
+      });
 
       const result = {
         isHoneypot,
@@ -306,17 +388,23 @@ const worker = {
             expirationTtl: CACHE_TTL.ONE_DAY,
           });
         } catch (cacheError) {
-          console.error("Cache write error:", cacheError);
+          log('error', 'Cache write error', { 
+            error: cacheError instanceof Error ? cacheError.message : 'Unknown' 
+          });
           // Continue without caching on error
         }
       }
 
-      return createJsonResponse(result, 200, true);
+      return createJsonResponse(result, 200, corsHeaders, true);
     } catch (error) {
-      console.error("Unexpected error:", error);
+      log('error', 'Unexpected error', { 
+        error: error instanceof Error ? error.message : 'Unknown',
+        stack: error instanceof Error ? error.stack : undefined
+      });
       return createErrorResponse(
-        error instanceof Error ? error.message : "An unexpected error occurred",
+        "An unexpected error occurred. Please try again later.",
         500,
+        corsHeaders,
         "INTERNAL_ERROR"
       );
     }

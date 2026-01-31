@@ -1,7 +1,7 @@
 name = "honeypotscan-api"
 main = "index.ts"
 compatibility_date = "2024-01-01"
-account_id = "5409b078a5a93cd064a01ec1fd56e675"
+# account_id is set via CLOUDFLARE_ACCOUNT_ID env var or wrangler whoami
 
 # KV namespace for caching
 [[kv_namespaces]]
