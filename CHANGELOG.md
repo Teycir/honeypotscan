@@ -5,6 +5,33 @@ All notable changes to HoneypotScan will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-01-31
+
+### Security
+- Removed hardcoded account_id from wrangler.toml (now uses OAuth token)
+- Enhanced CORS configuration with strict origin whitelist
+- Implemented proper Content Security Policy (CSP) headers
+- Added request timeout handling with AbortController (10s limit)
+- Implemented proper EIP-55 checksum validation using @noble/hashes keccak256
+- Added comprehensive Zod schema validation for API responses
+- Implemented structured logging system for better observability
+- Enhanced input sanitization and validation pipeline
+
+### Changed
+- Upgraded to Next.js 16.1.6 for improved performance and stability
+- Improved TypeScript strict mode configuration
+- Enhanced error messages for better user feedback
+- Optimized rate limiting implementation with proper cleanup
+- Improved pattern detection accuracy with 13 specialized patterns
+- Enhanced API key rotation logic for better reliability
+- Updated documentation with detailed algorithm explanations
+
+### Fixed
+- Fixed EIP-55 checksum validation (replaced SHA-256 fallback with proper keccak256)
+- Fixed potential array access issues with defensive checks
+- Improved error handling in chain detection
+- Enhanced validation to prevent malformed inputs
+
 ## [0.2.0] - 2026-01-30
 
 ### Added
