@@ -60,9 +60,15 @@ export function CodeScanTab() {
       // Use local detection since we have the code directly
       const detection = detectHoneypot(sanitized);
       
+      // Fixed confidence calculation:
+      // - Honeypot: Base 60%, +10% per pattern, capped at 95%
+      // - Safe: Base 95%, but if patterns found (below threshold), reduce confidence
+      //   to indicate uncertainty. Minimum 70% for safe contracts.
       const confidence = detection.isHoneypot 
         ? Math.min(95, 60 + detection.patterns.length * 10)
-        : Math.max(70, 95 - detection.patterns.length * 5);
+        : detection.patterns.length > 0
+          ? Math.max(70, 90 - detection.patterns.length * 10) // Some patterns found but below threshold
+          : 95; // No patterns at all = high confidence safe
 
       setResult({
         isHoneypot: detection.isHoneypot,

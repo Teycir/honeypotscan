@@ -75,6 +75,8 @@ export function AddressScanTab() {
   }, []);
 
   // Debounced history update when results change
+  // Fix: Capture results in closure to prevent race condition where results
+  // might change between timeout set and callback execution
   useEffect(() => {
     if (results.length > 0) {
       // Clear any pending timer
@@ -82,9 +84,12 @@ export function AddressScanTab() {
         clearTimeout(historyUpdateTimerRef.current);
       }
       
+      // Capture current results snapshot to prevent race condition
+      const resultsSnapshot = [...results];
+      
       // Debounce history updates to avoid localStorage spam
       historyUpdateTimerRef.current = setTimeout(() => {
-        results.forEach(result => {
+        resultsSnapshot.forEach(result => {
           if (!result.error) {
             addToScanHistory({
               address: result.address,

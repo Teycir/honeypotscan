@@ -22,10 +22,20 @@ export const ALLOWED_ORIGINS = [
   'http://localhost:3000',
 ] as const;
 
+/**
+ * Check if an origin is in the allowed list
+ * Uses strict string comparison instead of type assertion
+ */
+export function isAllowedOrigin(origin: string | null | undefined): boolean {
+  if (!origin || typeof origin !== 'string') return false;
+  // Use explicit includes check without type assertion
+  return (ALLOWED_ORIGINS as readonly string[]).includes(origin);
+}
+
 // Default CORS headers factory
 export function createCorsHeaders(origin?: string | null): Record<string, string> {
-  // Check if the origin is in the allowed list
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin as typeof ALLOWED_ORIGINS[number])
+  // Check if the origin is in the allowed list using strict comparison
+  const allowedOrigin = origin && isAllowedOrigin(origin)
     ? origin
     : ALLOWED_ORIGINS[0]; // Default to primary domain
   
@@ -60,33 +70,58 @@ export const SECURITY_LIMITS = {
   RATE_LIMIT_MAX_REQUESTS: 30, // 30 requests per minute per IP
 } as const;
 
-// XSS prevention patterns
+// XSS prevention patterns - comprehensive list including bypass attempts
 export const XSS_BLOCKLIST = [
-  // HTML tags
-  /<script/i,
-  /<\/script/i,
-  /<html/i,
-  /<body/i,
-  /<head/i,
-  /<div/i,
-  /<span/i,
-  /<iframe/i,
-  /<frame/i,
-  /<object/i,
-  /<embed/i,
-  /<form/i,
-  /<input/i,
-  /<link/i,
-  /<style/i,
-  /<meta/i,
-  /<img\s/i,
-  /<svg\s/i,
-  // Event handlers and dangerous attributes
-  /\bon\w+\s*=/i, // onclick=, onerror=, onload=, etc.
-  /javascript:/i,
-  /vbscript:/i,
-  /data:text\/html/i,
+  // HTML tags (with various whitespace bypass attempts)
+  /<\s*script/i,
+  /<\s*\/\s*script/i,
+  /<\s*html/i,
+  /<\s*body/i,
+  /<\s*head/i,
+  /<\s*iframe/i,
+  /<\s*frame/i,
+  /<\s*object/i,
+  /<\s*embed/i,
+  /<\s*form/i,
+  /<\s*input/i,
+  /<\s*link/i,
+  /<\s*style/i,
+  /<\s*meta/i,
+  /<\s*img[\s>]/i,
+  /<\s*svg[\s>]/i,
+  /<\s*math[\s>]/i,
+  /<\s*video[\s>]/i,
+  /<\s*audio[\s>]/i,
+  /<\s*base[\s>]/i,
+  /<\s*applet/i,
+  /<\s*marquee/i,
+  /<\s*bgsound/i,
+  /<\s*keygen/i,
+  /<\s*source[\s>]/i,
+  /<\s*track[\s>]/i,
+  /<\s*details[\s>]/i,
+  /<\s*template[\s>]/i,
+  // Event handlers and dangerous attributes (with whitespace/newline bypass)
+  /\bon\s*\w+\s*=/i, // on click=, on error=, etc. with spaces
+  /\bon[a-z]+\s*=/i, // onclick=, onerror=, onload=, etc.
+  // Protocol handlers
+  /javascript\s*:/i,
+  /vbscript\s*:/i,
+  /livescript\s*:/i,
+  /data\s*:\s*text\/html/i,
+  /data\s*:\s*application/i,
   // Expression injection
   /expression\s*\(/i,
-  /url\s*\(\s*["']?javascript/i,
+  /url\s*\(\s*["']?\s*javascript/i,
+  /url\s*\(\s*["']?\s*data:/i,
+  // Unicode/encoding bypass attempts
+  /&#/i, // HTML entities like &#x6A;
+  /\\u00/i, // Unicode escapes
+  /\\x3c/i, // Hex encoded <
+  // CSS expression attacks
+  /-moz-binding\s*:/i,
+  /behavior\s*:/i,
+  // Import/include attacks
+  /@import\s/i,
+  /@charset\s/i,
 ] as const;

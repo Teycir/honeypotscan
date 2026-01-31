@@ -8,7 +8,7 @@ import {
   CACHE_CONTROL_HEADERS,
   SECURITY_LIMITS,
   createCorsHeaders,
-  ALLOWED_ORIGINS,
+  isAllowedOrigin,
 } from "../lib/constants";
 import type { Env } from "../types";
 
@@ -16,11 +16,25 @@ import type { Env } from "../types";
 const DETECTION_VERSION = "v2";
 
 // In-memory rate limiting store (per worker instance)
-// Note: For distributed rate limiting across multiple edge locations,
-// consider using Cloudflare's Rate Limiting product or KV with TTL.
-// This in-memory approach works for single-instance testing but won't
-// share state across different edge locations in production.
+// ⚠️ PRODUCTION WARNING: This in-memory approach does NOT work across Cloudflare's
+// distributed edge locations. Each edge location maintains its own Map, so users
+// can bypass rate limits by hitting different edge locations.
+// 
+// For production deployments, use one of these solutions:
+// 1. Cloudflare's native Rate Limiting product (recommended)
+// 2. Cloudflare KV with TTL for distributed state
+// 3. Cloudflare Durable Objects for strongly consistent rate limiting
+//
+// This implementation is suitable for:
+// - Local development and testing
+// - Single-region deployments
+// - As a first-line defense in conjunction with Cloudflare Rate Limiting
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+// Cleanup tracking for rate limit store
+let lastCleanupTime = Date.now();
+const CLEANUP_INTERVAL_MS = 60000; // Cleanup every 60 seconds max
+const MAX_STORE_SIZE = 5000; // Trigger cleanup at 5000 entries
 
 interface ScanRequest {
   address: string;
@@ -93,6 +107,39 @@ function getClientIP(request: Request): string {
 }
 
 /**
+ * Perform periodic cleanup of expired rate limit entries
+ * Uses time-based throttling to prevent excessive cleanup overhead
+ */
+function cleanupExpiredEntries(): void {
+  const now = Date.now();
+  
+  // Throttle cleanup: only run if enough time has passed or store is large
+  if (now - lastCleanupTime < CLEANUP_INTERVAL_MS && rateLimitStore.size < MAX_STORE_SIZE) {
+    return;
+  }
+  
+  lastCleanupTime = now;
+  
+  // Delete expired entries
+  for (const [ip, data] of rateLimitStore) {
+    if (data.resetTime < now) {
+      rateLimitStore.delete(ip);
+    }
+  }
+  
+  // If still too large after cleanup, remove oldest entries (LRU-like)
+  if (rateLimitStore.size > MAX_STORE_SIZE) {
+    const entries = Array.from(rateLimitStore.entries())
+      .sort((a, b) => a[1].resetTime - b[1].resetTime);
+    
+    const toRemove = entries.slice(0, Math.floor(MAX_STORE_SIZE * 0.2)); // Remove 20%
+    for (const [ip] of toRemove) {
+      rateLimitStore.delete(ip);
+    }
+  }
+}
+
+/**
  * Check rate limit for a given IP
  * Returns true if request should be allowed, false if rate limited
  */
@@ -100,14 +147,8 @@ function checkRateLimit(clientIP: string): { allowed: boolean; remaining: number
   const now = Date.now();
   const entry = rateLimitStore.get(clientIP);
   
-  // Clean up expired entries periodically
-  if (rateLimitStore.size > 10000) {
-    for (const [ip, data] of rateLimitStore) {
-      if (data.resetTime < now) {
-        rateLimitStore.delete(ip);
-      }
-    }
-  }
+  // Perform periodic cleanup
+  cleanupExpiredEntries();
   
   if (!entry || entry.resetTime < now) {
     // New window
@@ -138,13 +179,7 @@ function checkRateLimit(clientIP: string): { allowed: boolean; remaining: number
   };
 }
 
-/**
- * Validate origin against allowed list
- */
-function isOriginAllowed(origin: string | null): boolean {
-  if (!origin) return false;
-  return ALLOWED_ORIGINS.includes(origin as typeof ALLOWED_ORIGINS[number]);
-}
+// Use isAllowedOrigin from constants for consistent validation
 
 const worker = {
   async fetch(
@@ -157,7 +192,7 @@ const worker = {
     // Handle CORS preflight
     if (request.method === "OPTIONS") {
       // For preflight, check if origin is allowed
-      if (origin && !isOriginAllowed(origin)) {
+      if (origin && !isAllowedOrigin(origin)) {
         log('warn', 'CORS preflight from unauthorized origin', { origin });
       }
       return new Response(null, { headers: corsHeaders });
@@ -177,6 +212,14 @@ const worker = {
     const clientIP = getClientIP(request);
     const rateLimit = checkRateLimit(clientIP);
     
+    // Helper to add rate limit headers to any response
+    const addRateLimitHeaders = (response: Response, remaining: number, resetIn: number): Response => {
+      response.headers.set('X-RateLimit-Limit', String(SECURITY_LIMITS.RATE_LIMIT_MAX_REQUESTS));
+      response.headers.set('X-RateLimit-Remaining', String(remaining));
+      response.headers.set('X-RateLimit-Reset', String(Math.ceil(resetIn / 1000)));
+      return response;
+    };
+
     if (!rateLimit.allowed) {
       log('warn', 'Rate limit exceeded', { clientIP, resetIn: rateLimit.resetIn });
       const response = createErrorResponse(
@@ -185,10 +228,7 @@ const worker = {
         corsHeaders,
         "RATE_LIMIT_EXCEEDED"
       );
-      // Add rate limit headers
-      response.headers.set('X-RateLimit-Limit', String(SECURITY_LIMITS.RATE_LIMIT_MAX_REQUESTS));
-      response.headers.set('X-RateLimit-Remaining', '0');
-      response.headers.set('X-RateLimit-Reset', String(Math.ceil(rateLimit.resetIn / 1000)));
+      addRateLimitHeaders(response, 0, rateLimit.resetIn);
       response.headers.set('Retry-After', String(Math.ceil(rateLimit.resetIn / 1000)));
       return response;
     }
@@ -336,32 +376,62 @@ const worker = {
         tokenMetadata = fetchResult.metadata;
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        // Log the full error for debugging, but sanitize for client response
         log('error', 'Source fetch error', { address: normalizedAddress, chain, error: errorMessage });
         
-        if (errorMessage.includes("not verified") || errorMessage.includes("not found")) {
-          return createErrorResponse(
+        // Sanitize error message - don't expose internal API details to clients
+        const isNotVerified = errorMessage.includes("not verified") || errorMessage.includes("not found");
+        const isTimeout = errorMessage.includes("timeout");
+        const isRateLimit = errorMessage.includes("rate limit") || errorMessage.includes("429");
+        
+        if (isNotVerified) {
+          const response = createErrorResponse(
             "Contract source code is not verified on block explorer. Only verified contracts can be scanned.",
             404,
             corsHeaders,
             "SOURCE_NOT_VERIFIED"
           );
+          return addRateLimitHeaders(response, rateLimit.remaining, rateLimit.resetIn);
         }
         
-        return createErrorResponse(
+        if (isTimeout) {
+          const response = createErrorResponse(
+            "Request timed out while fetching contract source. Please try again.",
+            504,
+            corsHeaders,
+            "SOURCE_FETCH_TIMEOUT"
+          );
+          return addRateLimitHeaders(response, rateLimit.remaining, rateLimit.resetIn);
+        }
+        
+        if (isRateLimit) {
+          const response = createErrorResponse(
+            "External API rate limit reached. Please wait a moment and try again.",
+            503,
+            corsHeaders,
+            "EXTERNAL_RATE_LIMIT"
+          );
+          return addRateLimitHeaders(response, rateLimit.remaining, rateLimit.resetIn);
+        }
+        
+        // Generic error - don't expose internal details
+        const response = createErrorResponse(
           "Failed to fetch contract source code. Please try again later.",
           503,
           corsHeaders,
           "SOURCE_FETCH_FAILED"
         );
+        return addRateLimitHeaders(response, rateLimit.remaining, rateLimit.resetIn);
       }
 
       if (!source || source.trim().length === 0) {
-        return createErrorResponse(
+        const response = createErrorResponse(
           "Contract source code not available or not verified on the block explorer.",
           404,
           corsHeaders,
           "SOURCE_NOT_AVAILABLE"
         );
+        return addRateLimitHeaders(response, rateLimit.remaining, rateLimit.resetIn);
       }
 
       // Perform honeypot detection
@@ -403,18 +473,21 @@ const worker = {
         }
       }
 
-      return createJsonResponse(result, 200, corsHeaders, true);
+      const response = createJsonResponse(result, 200, corsHeaders, true);
+      return addRateLimitHeaders(response, rateLimit.remaining, rateLimit.resetIn);
     } catch (error) {
       log('error', 'Unexpected error', { 
         error: error instanceof Error ? error.message : 'Unknown',
         stack: error instanceof Error ? error.stack : undefined
       });
-      return createErrorResponse(
+      // Don't expose internal error details to client
+      const response = createErrorResponse(
         "An unexpected error occurred. Please try again later.",
         500,
         corsHeaders,
         "INTERNAL_ERROR"
       );
+      return addRateLimitHeaders(response, rateLimit.remaining, rateLimit.resetIn);
     }
   },
 };
