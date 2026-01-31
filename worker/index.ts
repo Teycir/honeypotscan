@@ -107,7 +107,7 @@ const worker = {
       // Detect which chain the contract is on
       let chain: string | null;
       try {
-        chain = await detectChain(normalizedAddress);
+        chain = await detectChain(normalizedAddress, env);
       } catch (error) {
         console.error("Chain detection error:", error);
         return createErrorResponse(
