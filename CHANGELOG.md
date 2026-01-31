@@ -5,6 +5,26 @@ All notable changes to HoneypotScan will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-02-01
+
+### Added
+- **Pattern Explanations System** - Educational tooltips for all 13 detection patterns with severity levels, how-it-works descriptions, and protection tips
+- **Scan History** - localStorage-based history tracking (last 10 scans) for quick reference
+- **Share Results** - URL hash-based sharing system to share scan results without server storage
+- **Export Functionality** - Download scan results as JSON files for record-keeping
+- **Text Summary Generator** - Copy-paste friendly plain text summaries of scan results
+
+### Changed
+- Enhanced user experience with educational content for each detected pattern
+- Improved result display with severity-based color coding (critical/high/medium)
+- Added comprehensive test suite for new features (test-new-features.ts)
+
+### Technical
+- New utility modules: pattern-explanations.ts, scan-history.ts, share-utils.ts
+- Zero-load features - all new functionality runs client-side with no API calls
+- Base64 encoding for shareable URLs with validation
+- localStorage management with 10-item limit and duplicate prevention
+
 ## [0.2.1] - 2026-01-31
 
 ### Changed

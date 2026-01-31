@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Teycir/honeypotscan"><img src="https://img.shields.io/badge/version-0.2.1-blue.svg" alt="Version"></a>
+  <a href="https://github.com/Teycir/honeypotscan"><img src="https://img.shields.io/badge/version-0.3.0-blue.svg" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-BSL%201.1-green.svg" alt="License"></a>
   <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-16-black.svg" alt="Next.js"></a>
   <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-blue.svg" alt="React"></a>
@@ -61,6 +61,81 @@ For comprehensive security audits, consult professional auditors. HoneypotScan a
 - 🎯 **High Accuracy** - Pattern-based detection with confidence scoring
 - 📱 **Mobile Friendly** - Responsive design works on any device
 - 🛡️ **Enterprise Security** - CSP headers, CORS whitelist, input validation
+- 📚 **Educational Tooltips** - Learn about each detected pattern with severity levels and protection tips
+- 📋 **Scan History** - Track your last 10 scans locally for quick reference
+- 🔗 **Share Results** - Generate shareable URLs to send scan results to others
+- 💾 **Export Data** - Download scan results as JSON files for record-keeping
+
+## 📚 Educational Features
+
+### Pattern Explanations
+
+Every detected honeypot pattern comes with detailed educational content:
+
+- **Severity Level** - Critical, High, or Medium risk classification
+- **How It Works** - Plain-English explanation of the malicious technique
+- **Protection Tips** - Actionable advice to avoid similar scams
+
+Example pattern explanation:
+```
+🚨 tx.origin in Require Statement (CRITICAL)
+
+How it works: Transactions are blocked unless tx.origin matches 
+a specific address. DEX sells always fail because the router 
+becomes the msg.sender.
+
+Protection: tx.origin checks in access control are a major red flag.
+```
+
+### Scan History
+
+Your last 10 scans are automatically saved locally:
+- Quick access to previously scanned contracts
+- No server storage - complete privacy
+- Includes token name, symbol, and scan timestamp
+- One-click re-scan or share functionality
+
+### Share & Export
+
+**Share Results via URL:**
+```
+https://honeypotscan.com#result=eyJhIjoiMHguLi4ifQ==
+```
+- Results encoded in URL hash (no server needed)
+- Share with friends, communities, or social media
+- Recipient sees full scan details instantly
+
+**Export as JSON:**
+```json
+{
+  "scanner": "HoneypotScan",
+  "version": "1.0",
+  "scannedAt": "2026-02-01T12:00:00Z",
+  "result": {
+    "address": "0x...",
+    "isHoneypot": true,
+    "confidence": 95,
+    "patterns": [...]
+  }
+}
+```
+
+**Copy as Text:**
+```
+🔍 HoneypotScan Result
+════════════════════════════════════════
+Token: Scam Token (SCAM)
+Address: 0x...
+Chain: Ethereum
+
+Status: 🚨 HONEYPOT DETECTED
+Confidence: 95%
+
+⚠️ Patterns Found (3):
+  • tx_origin_require (line 123)
+  • hidden_sell_tax (line 456)
+  • transfer_whitelist_only (line 789)
+```
 
 ## 🎯 Use Cases
 
