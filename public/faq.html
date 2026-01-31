@@ -120,7 +120,17 @@
 
     <div class="faq-item">
       <h2>Which blockchains are supported?</h2>
-      <p>We automatically detect and support Ethereum, Polygon, and Arbitrum. Just paste any contract address and we'll find the right chain.</p>
+      <p>We ONLY support Ethereum, Polygon, and Arbitrum. These are the only chains we scan. We automatically detect which chain your contract is on. Other chains (BSC, Solana, Base, etc.) are not supported.</p>
+    </div>
+
+    <div class="faq-item">
+      <h2>What programming languages/contracts can you scan?</h2>
+      <p>We ONLY scan Solidity smart contracts. We cannot analyze contracts written in Vyper, Rust (Solana), or other languages. The contract must be written in Solidity and deployed on Ethereum, Polygon, or Arbitrum.</p>
+    </div>
+
+    <div class="faq-item">
+      <h2>Is this a full security audit?</h2>
+      <p><strong>NO.</strong> HoneypotScan is specialized for honeypot detection ONLY. We do NOT scan for reentrancy bugs, overflow/underflow, access control issues, oracle manipulation, or other smart contract vulnerabilities. We only answer one question: "Can I sell this token after I buy it?" For comprehensive security audits, consult professional auditors.</p>
     </div>
 
     <div class="faq-item">
