@@ -7,11 +7,16 @@ import {
   CACHE_TTL,
   CORS_HEADERS,
   CACHE_CONTROL_HEADERS,
+  SECURITY_LIMITS,
 } from "../lib/constants";
 import type { Env } from "../types";
 
 // Version for cache invalidation - increment when detection patterns change
 const DETECTION_VERSION = "v2";
+
+// In-memory rate limiting store (per worker instance)
+// Note: For distributed rate limiting, use Cloudflare's Rate Limiting or KV
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 interface ScanRequest {
   address: string;
@@ -39,6 +44,63 @@ function sanitizeAddress(address: string): string {
   return address.trim().toLowerCase();
 }
 
+/**
+ * Get client IP from request headers
+ */
+function getClientIP(request: Request): string {
+  // Cloudflare provides the client IP in CF-Connecting-IP header
+  return request.headers.get('CF-Connecting-IP') 
+    || request.headers.get('X-Forwarded-For')?.split(',')[0]?.trim()
+    || request.headers.get('X-Real-IP')
+    || 'unknown';
+}
+
+/**
+ * Check rate limit for a given IP
+ * Returns true if request should be allowed, false if rate limited
+ */
+function checkRateLimit(clientIP: string): { allowed: boolean; remaining: number; resetIn: number } {
+  const now = Date.now();
+  const entry = rateLimitStore.get(clientIP);
+  
+  // Clean up expired entries periodically
+  if (rateLimitStore.size > 10000) {
+    for (const [ip, data] of rateLimitStore) {
+      if (data.resetTime < now) {
+        rateLimitStore.delete(ip);
+      }
+    }
+  }
+  
+  if (!entry || entry.resetTime < now) {
+    // New window
+    rateLimitStore.set(clientIP, {
+      count: 1,
+      resetTime: now + SECURITY_LIMITS.RATE_LIMIT_WINDOW_MS,
+    });
+    return { 
+      allowed: true, 
+      remaining: SECURITY_LIMITS.RATE_LIMIT_MAX_REQUESTS - 1,
+      resetIn: SECURITY_LIMITS.RATE_LIMIT_WINDOW_MS,
+    };
+  }
+  
+  if (entry.count >= SECURITY_LIMITS.RATE_LIMIT_MAX_REQUESTS) {
+    return { 
+      allowed: false, 
+      remaining: 0,
+      resetIn: entry.resetTime - now,
+    };
+  }
+  
+  entry.count++;
+  return { 
+    allowed: true, 
+    remaining: SECURITY_LIMITS.RATE_LIMIT_MAX_REQUESTS - entry.count,
+    resetIn: entry.resetTime - now,
+  };
+}
+
 const worker = {
   async fetch(
     request: Request,
@@ -58,6 +120,24 @@ const worker = {
       );
     }
 
+    // Rate limiting
+    const clientIP = getClientIP(request);
+    const rateLimit = checkRateLimit(clientIP);
+    
+    if (!rateLimit.allowed) {
+      const response = createErrorResponse(
+        `Rate limit exceeded. Please try again in ${Math.ceil(rateLimit.resetIn / 1000)} seconds.`,
+        429,
+        "RATE_LIMIT_EXCEEDED"
+      );
+      // Add rate limit headers
+      response.headers.set('X-RateLimit-Limit', String(SECURITY_LIMITS.RATE_LIMIT_MAX_REQUESTS));
+      response.headers.set('X-RateLimit-Remaining', '0');
+      response.headers.set('X-RateLimit-Reset', String(Math.ceil(rateLimit.resetIn / 1000)));
+      response.headers.set('Retry-After', String(Math.ceil(rateLimit.resetIn / 1000)));
+      return response;
+    }
+
     // Validate content type
     const contentType = request.headers.get("content-type");
     if (!contentType?.includes("application/json")) {
@@ -68,11 +148,41 @@ const worker = {
       );
     }
 
+    // Check Content-Length header for size limit
+    const contentLength = request.headers.get("content-length");
+    if (contentLength && parseInt(contentLength, 10) > SECURITY_LIMITS.MAX_REQUEST_BODY_SIZE) {
+      return createErrorResponse(
+        `Request body too large (max ${Math.round(SECURITY_LIMITS.MAX_REQUEST_BODY_SIZE / 1024)}KB)`,
+        413,
+        "REQUEST_TOO_LARGE"
+      );
+    }
+
     try {
-      // Parse and validate request body
+      // Parse and validate request body with size check
+      let bodyText: string;
+      try {
+        bodyText = await request.text();
+      } catch {
+        return createErrorResponse(
+          "Failed to read request body",
+          400,
+          "BODY_READ_ERROR"
+        );
+      }
+
+      // Verify actual body size
+      if (bodyText.length > SECURITY_LIMITS.MAX_REQUEST_BODY_SIZE) {
+        return createErrorResponse(
+          `Request body too large (max ${Math.round(SECURITY_LIMITS.MAX_REQUEST_BODY_SIZE / 1024)}KB)`,
+          413,
+          "REQUEST_TOO_LARGE"
+        );
+      }
+
       let body: ScanRequest;
       try {
-        body = (await request.json()) as ScanRequest;
+        body = JSON.parse(bodyText) as ScanRequest;
       } catch {
         return createErrorResponse(
           "Invalid JSON in request body",

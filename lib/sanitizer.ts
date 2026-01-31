@@ -1,3 +1,5 @@
+import { SECURITY_LIMITS, XSS_BLOCKLIST } from './constants';
+
 /**
  * Sanitize and validate Solidity contract code
  */
@@ -88,6 +90,28 @@ export function sanitizeContractCode(code: string): SanitizeResult {
     };
   }
 
+  // Check maximum size limit first (DoS prevention)
+  if (code.length > SECURITY_LIMITS.MAX_CONTRACT_SIZE) {
+    return {
+      sanitized: '',
+      isValid: false,
+      error: `Contract code exceeds maximum size limit (${Math.round(SECURITY_LIMITS.MAX_CONTRACT_SIZE / 1024)}KB)`,
+      stats: { lines: 0, chars: code.length },
+    };
+  }
+
+  // Check for XSS patterns BEFORE any processing (security first)
+  for (const pattern of XSS_BLOCKLIST) {
+    if (pattern.test(code)) {
+      return {
+        sanitized: '',
+        isValid: false,
+        error: 'Invalid input: Potentially malicious content detected',
+        stats: { lines: 0, chars: 0 },
+      };
+    }
+  }
+
   // Normalize line endings
   let sanitized = code.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   
@@ -105,41 +129,38 @@ export function sanitizeContractCode(code: string): SanitizeResult {
     chars: sanitized.length,
   };
 
-  // Validation checks
-  if (sanitized.length < 50) {
+  // Minimum size validation (raised threshold for real contracts)
+  if (sanitized.length < SECURITY_LIMITS.MIN_CONTRACT_SIZE) {
     return {
       sanitized,
       isValid: false,
-      error: 'Code is too short to be a valid contract',
+      error: `Code is too short to be a valid contract (minimum ${SECURITY_LIMITS.MIN_CONTRACT_SIZE} characters)`,
       stats,
     };
   }
 
-  // Check for Solidity indicators
+  // Check for Solidity indicators - require BOTH pragma AND contract/interface/library
   const hasPragma = /pragma\s+solidity/i.test(sanitized);
   const hasContract = /contract\s+\w+/i.test(sanitized);
   const hasInterface = /interface\s+\w+/i.test(sanitized);
   const hasLibrary = /library\s+\w+/i.test(sanitized);
+  const hasDefinition = hasContract || hasInterface || hasLibrary;
 
-  if (!hasPragma && !hasContract && !hasInterface && !hasLibrary) {
+  if (!hasPragma) {
     return {
       sanitized,
       isValid: false,
-      error: 'No valid Solidity code detected (missing pragma/contract/interface)',
+      error: 'No valid Solidity code detected (missing pragma solidity statement)',
       stats,
     };
   }
 
-  // Check for potentially malicious patterns (basic XSS prevention)
-  const hasScript = /<script/i.test(sanitized);
-  const hasHtml = /<html|<body|<div/i.test(sanitized);
-  
-  if (hasScript || hasHtml) {
+  if (!hasDefinition) {
     return {
-      sanitized: '',
+      sanitized,
       isValid: false,
-      error: 'Invalid input: HTML/script tags detected',
-      stats: { lines: 0, chars: 0 },
+      error: 'No valid Solidity code detected (missing contract, interface, or library definition)',
+      stats,
     };
   }
 

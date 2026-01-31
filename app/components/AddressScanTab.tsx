@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { API_URL } from '@/lib/constants';
+import { API_URL, SECURITY_LIMITS } from '@/lib/constants';
 import { validateAddress as validateEthAddress } from '@/lib/validator';
 
 interface ScanResult {
@@ -28,12 +28,16 @@ const ETHERSCAN_URLS: Record<string, string> = {
 };
 
 const SCAN_TIMEOUT = 30000; // 30 seconds per address
+const MAX_ADDRESSES = SECURITY_LIMITS.MAX_ADDRESSES_PER_BATCH;
+
+// Create initial state arrays based on max addresses
+const createEmptyArray = () => Array(MAX_ADDRESSES).fill('');
 
 export function AddressScanTab() {
-  const [addresses, setAddresses] = useState(['', '', '']);
+  const [addresses, setAddresses] = useState(createEmptyArray);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [validationErrors, setValidationErrors] = useState<string[]>(['', '', '']);
+  const [validationErrors, setValidationErrors] = useState<string[]>(createEmptyArray);
   const [results, setResults] = useState<ScanResult[]>([]);
   const [progress, setProgress] = useState<ScanProgress | null>(null);
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
@@ -67,8 +71,8 @@ export function AddressScanTab() {
   }, [validateAddress]);
 
   const handleClearAll = useCallback(() => {
-    setAddresses(['', '', '']);
-    setValidationErrors(['', '', '']);
+    setAddresses(createEmptyArray());
+    setValidationErrors(createEmptyArray());
     setError('');
     setResults([]);
     setProgress(null);
@@ -206,7 +210,7 @@ export function AddressScanTab() {
         <div className="mb-4 space-y-2">
           <div className="flex items-center justify-between mb-2">
             <label className="block text-gray-300 font-medium text-sm">
-              Contract Addresses (up to 3)
+              Contract Addresses (up to {MAX_ADDRESSES})
             </label>
             {filledCount > 0 && (
               <button
