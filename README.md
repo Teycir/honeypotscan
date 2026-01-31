@@ -1,13 +1,25 @@
-# 🛡️ HoneypotScan
+<p align="center">
+  <img src="public/icon-192.png" alt="HoneypotScan Logo" width="128" height="128">
+</p>
 
-**Check if a token is a scam before you buy**
+<h1 align="center">🛡️ HoneypotScan</h1>
 
-Free, fast, and accurate honeypot detection for Ethereum, Polygon, and Arbitrum smart contracts.
+<p align="center">
+  <strong>Check if a token is a scam before you buy</strong>
+</p>
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/Teycir/honeypotscan)
-[![License](https://img.shields.io/badge/license-BSL%201.1-green.svg)](LICENSE)
-[![Next.js](https://img.shields.io/badge/Next.js-15-black.svg)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19-blue.svg)](https://react.dev/)
+<p align="center">
+  Free, fast, and accurate honeypot detection for Ethereum, Polygon, and Arbitrum smart contracts.
+</p>
+
+<p align="center">
+  <a href="https://github.com/Teycir/honeypotscan"><img src="https://img.shields.io/badge/version-0.2.0-blue.svg" alt="Version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-BSL%201.1-green.svg" alt="License"></a>
+  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-15-black.svg" alt="Next.js"></a>
+  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-blue.svg" alt="React"></a>
+</p>
+
+---
 
 ## ✨ Features
 
@@ -16,6 +28,16 @@ Free, fast, and accurate honeypot detection for Ethereum, Polygon, and Arbitrum 
 - 💾 **Smart Caching** - 95%+ cache hit rate
 - 🔒 **Privacy First** - No tracking, no data collection
 - 💰 **100% Free** - No limits, no API keys needed
+- 🎯 **High Accuracy** - Pattern-based detection with confidence scoring
+- 📱 **Mobile Friendly** - Responsive design works on any device
+
+## 🎯 Use Cases
+
+- **Traders** - Verify tokens before buying on DEXs like Uniswap or SushiSwap
+- **Investors** - Due diligence on new token launches and presales
+- **Developers** - Audit smart contracts for common honeypot patterns
+- **Communities** - Protect group members from scam tokens
+- **Researchers** - Analyze honeypot trends across different chains
 
 ## 🏗️ Architecture
 
@@ -159,6 +181,48 @@ Business Source License 1.1 - see [LICENSE](LICENSE) file
 
 **Change Date**: 2030-01-30 (converts to MIT License)
 
+## ❓ FAQ
+
+<details>
+<summary><strong>What is a honeypot token?</strong></summary>
+
+A honeypot is a scam token designed to let you buy but prevent you from selling. Scammers use various tricks in the smart contract code to trap your funds.
+</details>
+
+<details>
+<summary><strong>How accurate is HoneypotScan?</strong></summary>
+
+HoneypotScan uses pattern-based detection requiring 2+ suspicious patterns for high confidence results. While highly accurate, no scanner is 100% foolproof—always DYOR.
+</details>
+
+<details>
+<summary><strong>Which blockchains are supported?</strong></summary>
+
+Currently: Ethereum, Polygon, and Arbitrum. More chains coming soon.
+</details>
+
+<details>
+<summary><strong>Is there a rate limit?</strong></summary>
+
+No rate limits for normal use. The smart caching system handles high traffic efficiently.
+</details>
+
+<details>
+<summary><strong>Can honeypots still slip through?</strong></summary>
+
+Yes, sophisticated scammers may use novel techniques. HoneypotScan is a tool to help, not a guarantee. Always verify with multiple sources.
+</details>
+
+## 🌐 Other Projects
+
+Check out these other privacy-focused tools:
+
+| Project | Description |
+|---------|-------------|
+| [TimeSeal.online](https://timeseal.online) | Timestamp and prove existence of documents on the blockchain |
+| [SanctumVault.online](https://sanctumvault.online) | Secure encrypted file storage and sharing |
+| [Ghost-Chat](https://ghost-chat.pages.dev) | Anonymous encrypted messaging |
+
 ## ⚠️ Disclaimer
 
 This tool is provided for informational purposes only. Always do your own research (DYOR) before investing in any cryptocurrency or token. HoneypotScan is not financial advice.
@@ -171,4 +235,6 @@ This tool is provided for informational purposes only. Always do your own resear
 
 ---
 
-**Built with ❤️ using Next.js and Cloudflare**
+<p align="center">
+  <strong>Built with ❤️ using Next.js and Cloudflare</strong>
+</p>
