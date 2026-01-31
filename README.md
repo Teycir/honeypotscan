@@ -330,7 +330,7 @@ Permissions-Policy: camera=(), microphone=(), geolocation=()
 ### 🔐 Responsible Disclosure
 
 Found a security issue? Please report it privately:
-- **Email**: teycircoder4@gmail.com
+- **Email**: teycirc@pxdmail.net
 - **Subject**: "HoneypotScan Security Issue"
 - **Response time**: 24-48 hours
 
