@@ -53,3 +53,4 @@ tsconfig.tsbuildinfo
 .qodo/
 .zencoder/
 .zenflow/
+next-env.d.ts
