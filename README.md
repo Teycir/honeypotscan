@@ -15,11 +15,41 @@
 <p align="center">
   <a href="https://github.com/Teycir/honeypotscan"><img src="https://img.shields.io/badge/version-0.2.0-blue.svg" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-BSL%201.1-green.svg" alt="License"></a>
-  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-15-black.svg" alt="Next.js"></a>
+  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-16-black.svg" alt="Next.js"></a>
   <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-blue.svg" alt="React"></a>
 </p>
 
 ---
+
+## 🍯 What Are Honeypot Tokens?
+
+**We hunt honeypots.** A honeypot token is a malicious smart contract designed to steal your money. It lets you buy tokens freely, but when you try to sell—your transaction fails. Your funds are trapped forever.
+
+### How Honeypots Work
+
+Scammers embed hidden logic in the token's smart contract code:
+- **Sell blockers** - Only whitelisted addresses (the scammer) can sell
+- **Hidden taxes** - 95-100% sell tax drains your tokens
+- **tx.origin tricks** - Contract checks if you're the original buyer and blocks resale
+- **Dynamic blacklists** - Your address gets blacklisted after buying
+
+### The Risks
+
+- 💸 **Total loss of funds** - Once trapped, there's no way out
+- 🎭 **Fake legitimacy** - Honeypots often mimic real projects with copied websites and social media
+- ⚡ **Speed** - Scammers launch, pump, and abandon tokens within hours
+- 📈 **Rising threat** - Thousands of new honeypot tokens are deployed daily
+
+### ⚠️ Important: This Is NOT a Full Security Audit
+
+HoneypotScan is **specialized for honeypot detection only**. We do not scan for:
+- Reentrancy vulnerabilities
+- Flash loan exploits
+- Ownership/admin risks
+- Liquidity rug pulls
+- Other smart contract vulnerabilities
+
+For comprehensive security audits, consult professional auditors. HoneypotScan answers one question: **"Can I sell this token after I buy it?"**
 
 ## ✨ Features
 
@@ -42,7 +72,7 @@
 ## 🏗️ Architecture
 
 ```
-Next.js 15 (App Router)
+Next.js 16 (App Router)
     ↓
 Cloudflare Workers API
     ↓
@@ -136,7 +166,7 @@ CLOUDFLARE_API_TOKEN=your-api-token
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: Next.js 15, React 19, Tailwind CSS v4, Framer Motion
+- **Frontend**: Next.js 16, React 19, Tailwind CSS v4, Framer Motion
 - **Backend**: Cloudflare Workers
 - **Cache**: Cloudflare KV
 - **Scanner**: TypeScript (custom pattern detection)
@@ -232,6 +262,23 @@ This tool is provided for informational purposes only. Always do your own resear
 **Teycir Ben Soltane**
 - Website: [teycirbensoltane.tn](https://teycirbensoltane.tn)
 - GitHub: [@Teycir](https://github.com/Teycir)
+
+---
+
+## 💼 Hire Me
+
+Need a custom blockchain tool, security scanner, or web application? I'm available for freelance projects.
+
+**Services I offer:**
+- Smart contract analysis tools
+- DeFi dashboards and trading interfaces
+- Privacy-focused web applications
+- Cloudflare Workers & edge computing solutions
+- Full-stack Next.js development
+
+<p align="center">
+  <a href="https://teycirbensoltane.tn"><strong>🚀 Let's Work Together → teycirbensoltane.tn</strong></a>
+</p>
 
 ---
 
