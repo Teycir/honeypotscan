@@ -44,3 +44,12 @@ Thumbs.db
 .wrangler/
 wrangler.toml.backup
 .history
+
+# TypeScript
+tsconfig.tsbuildinfo
+
+# Tool-specific folders
+.kombai/
+.qodo/
+.zencoder/
+.zenflow/
