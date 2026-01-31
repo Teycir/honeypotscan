@@ -152,6 +152,9 @@ contract MyToken {
             'Scan Code'
           )}
         </button>
+        <p className="mt-2 text-center text-xs text-gray-500/70">
+          Scans Solidity contracts via Etherscan API on Ethereum, Polygon, and Arbitrum
+        </p>
       </form>
 
       <AnimatePresence>

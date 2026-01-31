@@ -81,6 +81,8 @@ Cloudflare KV (Cache)
 TypeScript Pattern Detector
     ↓
 Etherscan API (6 keys with rotation)
+    ↓
+Ethereum, Polygon, and Arbitrum
 ```
 
 ## 🚀 Quick Start
