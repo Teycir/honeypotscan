@@ -14,7 +14,7 @@ export function AnimatedTagline({ text }: { text: string }) {
 
   if (!mounted) {
     return (
-      <p className="text-base sm:text-lg text-gray-300 cursor-default group relative">
+      <p className="text-base sm:text-lg text-gray-300 cursor-default">
         {text}
       </p>
     );
@@ -22,10 +22,9 @@ export function AnimatedTagline({ text }: { text: string }) {
 
   return (
     <motion.p
-      className="text-base sm:text-lg text-gray-300 cursor-default group relative"
+      className="text-base sm:text-lg text-gray-300 cursor-default inline-block"
       initial={false}
       whileHover={{
-        scale: 1.05,
         textShadow: '0 0 20px rgba(59, 130, 246, 0.8), 0 0 40px rgba(59, 130, 246, 0.4)',
         transition: { duration: 0.3 }
       }}
@@ -41,7 +40,6 @@ export function AnimatedTagline({ text }: { text: string }) {
             delay: (chars.length - 1 - i) * 0.05
           }}
           whileHover={{
-            y: -2,
             color: '#60a5fa',
             textShadow: '0 0 10px rgba(96, 165, 250, 1)',
             transition: { duration: 0.2 }

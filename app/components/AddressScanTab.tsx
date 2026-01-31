@@ -782,27 +782,39 @@ export function AddressScanTab() {
 
                     {/* Action Buttons */}
                     <div className="mt-4 pt-4 border-t border-gray-700/50 flex flex-wrap gap-2">
-                      <button
-                        onClick={() => handleShare(result)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 text-xs rounded transition"
-                        title="Copy shareable link"
+                      <span 
+                        className="tooltip-container" 
+                        data-tooltip="Copy shareable link to clipboard"
                       >
-                        {copiedShareUrl === result.address ? '✓ Copied!' : '🔗 Share'}
-                      </button>
-                      <button
-                        onClick={() => handleCopyText(result)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-600/20 hover:bg-gray-600/30 text-gray-300 text-xs rounded transition"
-                        title="Copy as text"
+                        <button
+                          onClick={() => handleShare(result)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 text-xs rounded-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                          {copiedShareUrl === result.address ? '✓ Copied!' : '🔗 Share'}
+                        </button>
+                      </span>
+                      <span 
+                        className="tooltip-container" 
+                        data-tooltip="Copy result as formatted text"
                       >
-                        {copiedText ? '✓ Copied!' : '📄 Copy Text'}
-                      </button>
-                      <button
-                        onClick={() => handleDownload(result)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-600/20 hover:bg-gray-600/30 text-gray-300 text-xs rounded transition"
-                        title="Download JSON"
+                        <button
+                          onClick={() => handleCopyText(result)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-600/20 hover:bg-gray-600/30 text-gray-300 text-xs rounded-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                          {copiedText ? '✓ Copied!' : '📄 Copy Text'}
+                        </button>
+                      </span>
+                      <span 
+                        className="tooltip-container" 
+                        data-tooltip="Download scan result as JSON file"
                       >
-                        💾 Download JSON
-                      </button>
+                        <button
+                          onClick={() => handleDownload(result)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-600/20 hover:bg-gray-600/30 text-gray-300 text-xs rounded-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                          💾 Download JSON
+                        </button>
+                      </span>
                     </div>
                   </>
                 )}
