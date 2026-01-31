@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.1] - 2026-01-31
 
+### Changed
+- Upgraded to Next.js 16.1.6 with Turbopack for improved performance
+- Enhanced pattern detection with 13 specialized patterns (up from 9)
+- Improved build speed and compilation with Next.js 16 Turbopack
+- Updated deployment script with clearer warning messages
+
 ### Security
 - Removed hardcoded account_id from wrangler.toml (now uses OAuth token)
 - Enhanced CORS configuration with strict origin whitelist
@@ -60,13 +66,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cloudflare Workers API backend
 - Cloudflare KV caching layer (95%+ hit rate)
 - TypeScript-based pattern detection engine
-- 9 honeypot detection patterns:
-  - `tx.origin` abuse detection
-  - Hidden fee function detection
-  - Sell blocking logic detection
-  - Asymmetric transfer restrictions
-  - Whitelist-only transfer detection
-  - Hidden sell tax detection (95-100%)
+- 13 honeypot detection patterns across 4 categories:
+  - Core ERC20 Abuse: `tx.origin` in balanceOf/allowance/transfer
+  - Hidden Helpers: _taxPayer, _isSuper with tx.origin
+  - Auth Bypasses: tx.origin in require/if/assert/mapping
+  - Transfer Blocks: Sell restrictions, whitelists, 95-100% taxes
 - Etherscan API integration with 6-key rotation
 - Next.js 15 frontend with App Router
 - Tailwind CSS v4 styling

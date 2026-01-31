@@ -77,10 +77,20 @@ Check In-Memory Cache (95% hit rate)
     ↓
 If not cached → Fetch from Etherscan
     ↓
-Run Honeypot Detection (9 patterns)
+Run Honeypot Detection (13 patterns)
     ↓
 Cache Result → Return to User
 ```
+
+## Detection Patterns
+
+The scanner uses **13 specialized patterns** across 4 categories:
+- Core ERC20 Abuse (3 patterns)
+- Hidden Helpers (2 patterns)
+- Auth Bypasses (4 patterns)
+- Transfer Blocks (4 patterns)
+
+**Threshold:** 2+ patterns = 95% confidence honeypot
 
 ## Scaling
 

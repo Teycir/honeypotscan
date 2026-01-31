@@ -3,13 +3,14 @@
 ## ✅ What's Been Built
 
 ### Core Features
-- ✅ **Next.js 14 Frontend** - Clean, modern UI with Tailwind CSS
+- ✅ **Next.js 16 Frontend** - Clean, modern UI with Tailwind CSS v4
 - ✅ **API Endpoint** - `/api/scan` with honeypot detection
-- ✅ **9 Detection Patterns** - From SCPF honeypot filter
+- ✅ **13 Detection Patterns** - Comprehensive honeypot detection across 4 categories
 - ✅ **Multi-chain Support** - Ethereum, Polygon, Arbitrum
-- ✅ **Smart Caching** - In-memory cache (95%+ hit rate)
+- ✅ **Smart Caching** - Cloudflare KV cache (95%+ hit rate)
 - ✅ **API Key Rotation** - 6 Etherscan keys with automatic rotation
 - ✅ **Responsive Design** - Mobile-friendly interface
+- ✅ **Security Hardened** - CSP headers, CORS whitelist, input validation
 
 ### Project Structure
 ```
@@ -48,19 +49,30 @@ Open http://localhost:3000
 
 ## 📊 Detection Patterns
 
-The scanner checks for 9 honeypot patterns:
+The scanner checks for **13 honeypot patterns** across 4 categories:
 
+### 1️⃣ Core ERC20 Abuse (3 patterns)
 1. **balance_tx_origin** - tx.origin in balanceOf()
 2. **allowance_tx_origin** - tx.origin in allowance()
 3. **transfer_tx_origin** - tx.origin in transfer()
+
+### 2️⃣ Hidden Helper Functions (2 patterns)
 4. **hidden_fee_taxPayer** - Hidden _taxPayer() function
 5. **isSuper_tx_origin** - _isSuper() with tx.origin
-6. **sell_block_pattern** - Blocks transfers to DEX
-7. **asymmetric_transfer_logic** - Transfer restrictions
-8. **transfer_whitelist_only** - Whitelist-only transfers
-9. **hidden_sell_tax** - 95-100% sell tax
 
-**Confidence:** Requires 2+ patterns for 95% confidence
+### 3️⃣ Authentication Bypasses (4 patterns)
+6. **tx_origin_require** - require() with tx.origin
+7. **tx_origin_if_auth** - if statement with tx.origin for auth
+8. **tx_origin_assert** - assert() with tx.origin
+9. **tx_origin_mapping** - Mapping access via [tx.origin]
+
+### 4️⃣ Transfer Restrictions (4 patterns)
+10. **sell_block_pattern** - Blocks transfers to DEX
+11. **asymmetric_transfer_logic** - Transfer restrictions
+12. **transfer_whitelist_only** - Whitelist-only transfers
+13. **hidden_sell_tax** - 95-100% sell tax
+
+**Confidence:** Requires 2+ patterns for 95% confidence honeypot classification
 
 ## 💰 Cost Analysis
 
@@ -71,6 +83,15 @@ The scanner checks for 9 honeypot patterns:
 - **Effective Capacity**: 52M scans/day
 
 ### Monthly Cost: $0 🎉
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 16, React 19, Tailwind CSS v4, Framer Motion
+- **Backend**: Cloudflare Workers
+- **Cache**: Cloudflare KV
+- **Scanner**: TypeScript (custom pattern detection)
+- **APIs**: Etherscan, Polygonscan, Arbiscan
+- **Deployment**: Cloudflare Pages + Workers
 
 ## 🎯 Next Steps
 

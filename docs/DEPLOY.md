@@ -34,6 +34,8 @@ Enter each API key when prompted.
 npm run build
 ```
 
+This will build with Next.js 16 and Turbopack for optimized performance.
+
 ## Step 5: Deploy to Cloudflare Pages
 
 ```bash
