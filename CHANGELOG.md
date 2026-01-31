@@ -5,6 +5,22 @@ All notable changes to HoneypotScan will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-02-02
+
+### Documentation
+- Added comprehensive GitHub SEO optimization guide
+- Enhanced README with detailed security architecture documentation
+- Improved detection algorithm explanations with real-world performance metrics
+- Added FAQ section with accuracy statistics
+- Documented all 13 detection patterns with code examples
+- Created deployment and quick start guides
+
+### Repository
+- Optimized GitHub repository metadata for discoverability
+- Added 20 relevant topics for better search visibility
+- Enhanced social media integration and sharing capabilities
+- Improved project structure documentation
+
 ## [0.3.0] - 2026-02-01
 
 ### Added
