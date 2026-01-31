@@ -1,6 +1,6 @@
 import { CHAIN_CONFIGS } from './patterns';
 import { parseSourceCode } from './parser';
-import type { Env } from '@/types';
+import type { Env, FetchResult, TokenMetadata } from '@/types';
 
 // Request timeout in milliseconds
 const REQUEST_TIMEOUT_MS = 10000; // 10 seconds
@@ -27,10 +27,17 @@ function shuffleArray<T>(array: T[]): T[] {
 /**
  * Etherscan API response schema validation
  */
+interface EtherscanContractResult {
+  SourceCode?: string;
+  ContractName?: string;
+  CompilerVersion?: string;
+  [key: string]: unknown;
+}
+
 interface EtherscanResponse {
   status: string;
   message?: string;
-  result?: Array<{ SourceCode?: string; [key: string]: unknown }>;
+  result?: EtherscanContractResult[];
 }
 
 function isValidEtherscanResponse(data: unknown): data is EtherscanResponse {
@@ -42,7 +49,18 @@ function isValidEtherscanResponse(data: unknown): data is EtherscanResponse {
   return true;
 }
 
-export async function fetchContractSource(address: string, chain: string, env: Env): Promise<string> {
+/**
+ * Extract token metadata from Etherscan response
+ */
+function extractMetadata(contractResult: EtherscanContractResult): TokenMetadata {
+  return {
+    name: typeof contractResult.ContractName === 'string' ? contractResult.ContractName : null,
+    symbol: null, // Etherscan API doesn't return symbol directly, would need to parse from source
+    compilerVersion: typeof contractResult.CompilerVersion === 'string' ? contractResult.CompilerVersion : null,
+  };
+}
+
+export async function fetchContractSource(address: string, chain: string, env: Env): Promise<FetchResult> {
   const config = CHAIN_CONFIGS[chain];
   if (!config) throw new Error(`Unsupported chain: ${chain}`);
   
@@ -111,7 +129,10 @@ export async function fetchContractSource(address: string, chain: string, env: E
         continue;
       }
       
-      return parseSourceCode(sourceCode);
+      return {
+        sourceCode: parseSourceCode(sourceCode),
+        metadata: extractMetadata(firstResult),
+      };
       
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {

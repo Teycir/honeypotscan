@@ -82,9 +82,9 @@ async function scanContracts(
     console.log(`\n[${i + 1}/${contracts.length}] Scanning: ${address}`);
 
     try {
-      const source = await fetchContractSource(address, chain, env);
+      const fetchResult = await fetchContractSource(address, chain, env);
       
-      if (!source) {
+      if (!fetchResult || !fetchResult.sourceCode) {
         console.log(`  ⚠️  No source code available`);
         results.push({
           address,
@@ -96,7 +96,7 @@ async function scanContracts(
         continue;
       }
 
-      const { isHoneypot, patterns } = detectHoneypot(source);
+      const { isHoneypot, patterns } = detectHoneypot(fetchResult.sourceCode);
 
       results.push({
         address,

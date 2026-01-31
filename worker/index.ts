@@ -323,10 +323,17 @@ const worker = {
         }
       }
 
-      // Fetch contract source code
+      // Fetch contract source code and metadata
       let source: string;
+      let tokenMetadata: { name: string | null; symbol: string | null; compilerVersion: string | null } = {
+        name: null,
+        symbol: null,
+        compilerVersion: null,
+      };
       try {
-        source = await fetchContractSource(normalizedAddress, chain, env);
+        const fetchResult = await fetchContractSource(normalizedAddress, chain, env);
+        source = fetchResult.sourceCode;
+        tokenMetadata = fetchResult.metadata;
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         log('error', 'Source fetch error', { address: normalizedAddress, chain, error: errorMessage });
@@ -377,6 +384,7 @@ const worker = {
         message: isHoneypot
           ? `⚠️ This contract contains ${patterns.length} honeypot pattern${patterns.length > 1 ? 's' : ''}. DO NOT BUY!`
           : "✅ No honeypot patterns detected. Contract appears safe.",
+        tokenMetadata,
         scannedAt: new Date().toISOString(),
         detectionVersion: DETECTION_VERSION,
       };

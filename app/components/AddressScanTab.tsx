@@ -1,9 +1,18 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL, SECURITY_LIMITS } from '@/lib/constants';
 import { validateAddress as validateEthAddress } from '@/lib/validator';
+import { getPatternExplanation, getSeverityColor } from '@/lib/pattern-explanations';
+import { getScanHistory, addToScanHistory, clearScanHistory, type HistoryScanResult } from '@/lib/scan-history';
+import { 
+  generateShareUrl, 
+  generateTextSummary, 
+  downloadResultAsJson,
+  getSharedResultFromUrl,
+  type ShareableResult 
+} from '@/lib/share-utils';
 
 interface ScanResult {
   address: string;
@@ -13,6 +22,12 @@ interface ScanResult {
   chain: string;
   message: string;
   error?: string;
+  tokenMetadata?: {
+    name: string | null;
+    symbol: string | null;
+    compilerVersion: string | null;
+  };
+  scannedAt?: string;
 }
 
 interface ScanProgress {
@@ -27,11 +42,10 @@ const ETHERSCAN_URLS: Record<string, string> = {
   arbitrum: 'https://arbiscan.io/address/',
 };
 
-const SCAN_TIMEOUT = 30000; // 30 seconds per address
+const SCAN_TIMEOUT = 30000;
 const MAX_ADDRESSES = SECURITY_LIMITS.MAX_ADDRESSES_PER_BATCH;
-const DELAY_BETWEEN_SCANS = 3000; // 3 seconds delay between scans to avoid rate limiting
+const DELAY_BETWEEN_SCANS = 3000;
 
-// Create initial state arrays based on max addresses
 const createEmptyArray = () => Array(MAX_ADDRESSES).fill('');
 
 export function AddressScanTab() {
@@ -42,6 +56,59 @@ export function AddressScanTab() {
   const [results, setResults] = useState<ScanResult[]>([]);
   const [progress, setProgress] = useState<ScanProgress | null>(null);
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+  const [copiedText, setCopiedText] = useState(false);
+  const [copiedShareUrl, setCopiedShareUrl] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState<HistoryScanResult[]>([]);
+  const [sharedResult, setSharedResult] = useState<ShareableResult | null>(null);
+  const historyUpdateTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load history on mount
+  useEffect(() => {
+    setHistory(getScanHistory());
+    
+    // Check for shared result in URL
+    const shared = getSharedResultFromUrl();
+    if (shared) {
+      setSharedResult(shared);
+    }
+  }, []);
+
+  // Debounced history update when results change
+  useEffect(() => {
+    if (results.length > 0) {
+      // Clear any pending timer
+      if (historyUpdateTimerRef.current) {
+        clearTimeout(historyUpdateTimerRef.current);
+      }
+      
+      // Debounce history updates to avoid localStorage spam
+      historyUpdateTimerRef.current = setTimeout(() => {
+        results.forEach(result => {
+          if (!result.error) {
+            addToScanHistory({
+              address: result.address,
+              isHoneypot: result.isHoneypot,
+              confidence: result.confidence,
+              patternCount: result.patterns.length,
+              chain: result.chain,
+              scannedAt: result.scannedAt || new Date().toISOString(),
+              tokenName: result.tokenMetadata?.name || undefined,
+              tokenSymbol: result.tokenMetadata?.symbol || undefined,
+            });
+          }
+        });
+        setHistory(getScanHistory());
+      }, 1000); // Wait 1 second after last result update
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (historyUpdateTimerRef.current) {
+        clearTimeout(historyUpdateTimerRef.current);
+      }
+    };
+  }, [results]);
 
   const validateAddress = useCallback((address: string, index: number) => {
     if (!address.trim()) {
@@ -77,6 +144,16 @@ export function AddressScanTab() {
     setError('');
     setResults([]);
     setProgress(null);
+    setSharedResult(null);
+    // Clear URL hash
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, []);
+
+  const handleClearHistory = useCallback(() => {
+    clearScanHistory();
+    setHistory([]);
   }, []);
 
   const handleCopyAddress = useCallback(async (address: string) => {
@@ -88,6 +165,66 @@ export function AddressScanTab() {
       // Clipboard API not available
     }
   }, []);
+
+  const handleCopyText = useCallback(async (result: ScanResult) => {
+    try {
+      const text = generateTextSummary({
+        address: result.address,
+        isHoneypot: result.isHoneypot,
+        confidence: result.confidence,
+        patterns: result.patterns,
+        chain: result.chain,
+        message: result.message,
+        tokenName: result.tokenMetadata?.name || undefined,
+        tokenSymbol: result.tokenMetadata?.symbol || undefined,
+      });
+      await navigator.clipboard.writeText(text);
+      setCopiedText(true);
+      setTimeout(() => setCopiedText(false), 2000);
+    } catch {
+      // Clipboard API not available
+    }
+  }, []);
+
+  const handleShare = useCallback(async (result: ScanResult) => {
+    const url = generateShareUrl({
+      address: result.address,
+      isHoneypot: result.isHoneypot,
+      confidence: result.confidence,
+      patterns: result.patterns,
+      chain: result.chain,
+      tokenName: result.tokenMetadata?.name || undefined,
+      tokenSymbol: result.tokenMetadata?.symbol || undefined,
+      scannedAt: result.scannedAt,
+    });
+    
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedShareUrl(result.address);
+      setTimeout(() => setCopiedShareUrl(null), 2000);
+    } catch {
+      // Clipboard API not available
+    }
+  }, []);
+
+  const handleDownload = useCallback((result: ScanResult) => {
+    downloadResultAsJson({
+      address: result.address,
+      isHoneypot: result.isHoneypot,
+      confidence: result.confidence,
+      patterns: result.patterns,
+      chain: result.chain,
+      message: result.message,
+      tokenName: result.tokenMetadata?.name || undefined,
+      tokenSymbol: result.tokenMetadata?.symbol || undefined,
+      compilerVersion: result.tokenMetadata?.compilerVersion || undefined,
+    });
+  }, []);
+
+  const handleHistoryItemClick = useCallback((historyItem: HistoryScanResult) => {
+    handleAddressChange(historyItem.address, 0);
+    setShowHistory(false);
+  }, [handleAddressChange]);
 
   const hasValidAddresses = addresses.some((addr, i) => 
     addr.trim() && !validationErrors[i]
@@ -166,6 +303,7 @@ export function AddressScanTab() {
     setLoading(true);
     setError('');
     setResults([]);
+    setSharedResult(null);
 
     const validAddresses = addresses.filter((a, i) => a.trim() && !validationErrors[i]);
     if (validAddresses.length === 0) {
@@ -188,12 +326,8 @@ export function AddressScanTab() {
 
         const result = await scanSingleAddress(addr, abortController.signal);
         scanResults.push(result);
-        
-        // Update results progressively
         setResults([...scanResults]);
         
-        // Add delay between scans to avoid Etherscan API rate limiting
-        // Only add delay if there are more addresses to scan
         if (i < validAddresses.length - 1) {
           await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_SCANS));
         }
@@ -213,6 +347,107 @@ export function AddressScanTab() {
 
   return (
     <div role="tabpanel" id="panel-address" aria-labelledby="tab-address">
+      {/* Shared Result Banner */}
+      <AnimatePresence>
+        {sharedResult && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className={`mb-6 p-4 rounded-lg border-2 ${
+              sharedResult.h 
+                ? 'bg-red-900/30 border-red-500' 
+                : 'bg-green-900/30 border-green-500'
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-400 mb-1">📤 Shared Result</p>
+                <h3 className={`font-bold ${sharedResult.h ? 'text-red-400' : 'text-green-400'}`}>
+                  {sharedResult.h ? '🚨 HONEYPOT DETECTED' : '✅ SAFE CONTRACT'}
+                </h3>
+                <p className="text-sm text-gray-300 font-mono mt-1">{sharedResult.a}</p>
+                <div className="flex gap-2 mt-2 text-xs text-gray-400">
+                  <span className="capitalize">{sharedResult.n}</span>
+                  <span>•</span>
+                  <span>{sharedResult.c}% confidence</span>
+                  {sharedResult.p > 0 && (
+                    <>
+                      <span>•</span>
+                      <span>{sharedResult.p} pattern{sharedResult.p > 1 ? 's' : ''}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  handleAddressChange(sharedResult.a, 0);
+                  setSharedResult(null);
+                  window.history.replaceState(null, '', window.location.pathname);
+                }}
+                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition"
+              >
+                Re-scan
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Scan History */}
+      {history.length > 0 && !loading && results.length === 0 && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="text-xs text-gray-400 hover:text-white transition flex items-center gap-1"
+            >
+              <span>📜</span>
+              <span>Recent Scans ({history.length})</span>
+              <span className={`transition-transform ${showHistory ? 'rotate-180' : ''}`}>▼</span>
+            </button>
+            <button
+              onClick={handleClearHistory}
+              className="text-xs px-2 py-1 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded transition"
+              title="Clear all scan history"
+            >
+              🗑️ Clear Data
+            </button>
+          </div>
+          
+          <AnimatePresence>
+            {showHistory && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-2 bg-gray-800/50 rounded-lg p-3 space-y-2 overflow-hidden"
+              >
+                {history.map((item, idx) => (
+                  <button
+                    key={`${item.address}-${idx}`}
+                    onClick={() => handleHistoryItemClick(item)}
+                    className="w-full text-left p-2 hover:bg-gray-700/50 rounded transition flex items-center justify-between group"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={item.isHoneypot ? 'text-red-400' : 'text-green-400'}>
+                        {item.isHoneypot ? '🚨' : '✅'}
+                      </span>
+                      <span className="text-xs font-mono text-gray-300 truncate">
+                        {item.tokenName || item.address.slice(0, 20)}...
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-gray-500 shrink-0">
+                      {new Date(item.scannedAt).toLocaleDateString()}
+                    </span>
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
       <form onSubmit={handleScan}>
         <div className="mb-4 space-y-2">
           <div className="flex items-center justify-between mb-2">
@@ -380,7 +615,6 @@ export function AddressScanTab() {
                 }`}
               >
                 {result.error ? (
-                  // Error state
                   <div>
                     <div className="flex items-start justify-between mb-2">
                       <h3 className="text-lg font-bold text-yellow-400 flex items-center gap-2">
@@ -393,7 +627,6 @@ export function AddressScanTab() {
                     <p className="text-sm text-yellow-200">{result.error}</p>
                   </div>
                 ) : (
-                  // Success state
                   <>
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
@@ -410,6 +643,21 @@ export function AddressScanTab() {
                             </>
                           )}
                         </h3>
+                        
+                        {/* Token Metadata Display */}
+                        {result.tokenMetadata?.name && (
+                          <div className="mb-2">
+                            <span className="text-white font-medium">
+                              {result.tokenMetadata.name}
+                            </span>
+                            {result.tokenMetadata.symbol && (
+                              <span className="text-gray-400 ml-1">
+                                ({result.tokenMetadata.symbol})
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        
                         <div className="flex items-center gap-2">
                           <p className="text-sm text-gray-300 font-mono break-all">
                             {result.address}
@@ -451,6 +699,11 @@ export function AddressScanTab() {
                       <span className="bg-gray-700/50 px-2 py-1 rounded capitalize">
                         Chain: {result.chain}
                       </span>
+                      {result.tokenMetadata?.compilerVersion && (
+                        <span className="bg-gray-700/50 px-2 py-1 rounded">
+                          Compiler: {result.tokenMetadata.compilerVersion.split('+')[0]}
+                        </span>
+                      )}
                       {result.patterns.length > 0 && (
                         <span className="bg-red-900/30 text-red-300 px-2 py-1 rounded">
                           {result.patterns.length} Pattern{result.patterns.length > 1 ? 's' : ''} Found
@@ -458,26 +711,62 @@ export function AddressScanTab() {
                       )}
                     </div>
 
+                    {/* Pattern Explanations */}
                     {result.patterns.length > 0 && (
                       <details className="mt-4">
                         <summary className="cursor-pointer text-xs font-bold text-red-300 uppercase hover:text-red-200 transition">
                           View Detected Patterns ({result.patterns.length})
                         </summary>
-                        <div className="mt-3 bg-black/30 rounded p-3 space-y-2">
-                          {result.patterns.map((pattern, i) => (
-                            <div key={i} className="text-xs text-gray-300 flex items-start gap-2">
-                              <span className="text-red-400">•</span>
-                              <div>
-                                <span className="font-mono text-red-400">{pattern.name}</span>
-                                <span className="text-gray-500 ml-2">(line {pattern.line})</span>
+                        <div className="mt-3 space-y-3">
+                          {result.patterns.map((pattern, i) => {
+                            const explanation = getPatternExplanation(pattern.name);
+                            return (
+                              <div 
+                                key={i} 
+                                className="bg-black/30 rounded-lg p-3 border border-red-900/30"
+                              >
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-red-400 text-sm">⚠️</span>
+                                    <span className="font-mono text-red-400 text-sm">
+                                      {explanation?.title || pattern.name}
+                                    </span>
+                                  </div>
+                                  <span className="text-gray-500 text-xs">
+                                    line {pattern.line}
+                                  </span>
+                                </div>
+                                
+                                {explanation && (
+                                  <details className="mt-2">
+                                    <summary className="cursor-pointer text-xs text-gray-400 hover:text-gray-300">
+                                      Learn more about this pattern
+                                    </summary>
+                                    <div className="mt-2 space-y-2 text-xs">
+                                      <p className="text-gray-300">{explanation.description}</p>
+                                      <div className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getSeverityColor(explanation.severity)}`}>
+                                        {explanation.severity} severity
+                                      </div>
+                                      <div className="mt-2">
+                                        <p className="text-gray-500 font-medium mb-1">How it works:</p>
+                                        <p className="text-gray-400">{explanation.howItWorks}</p>
+                                      </div>
+                                      <div className="mt-2">
+                                        <p className="text-gray-500 font-medium mb-1">Protection:</p>
+                                        <p className="text-green-400/80">{explanation.protection}</p>
+                                      </div>
+                                    </div>
+                                  </details>
+                                )}
+                                
                                 {pattern.code && (
-                                  <pre className="mt-1 text-gray-500 text-[10px] overflow-x-auto max-w-full">
-                                    {pattern.code.substring(0, 80)}...
+                                  <pre className="mt-2 text-gray-500 text-[10px] overflow-x-auto max-w-full bg-black/30 p-2 rounded">
+                                    {pattern.code.substring(0, 100)}...
                                   </pre>
                                 )}
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </details>
                     )}
@@ -490,6 +779,31 @@ export function AddressScanTab() {
                         </p>
                       </div>
                     )}
+
+                    {/* Action Buttons */}
+                    <div className="mt-4 pt-4 border-t border-gray-700/50 flex flex-wrap gap-2">
+                      <button
+                        onClick={() => handleShare(result)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 text-xs rounded transition"
+                        title="Copy shareable link"
+                      >
+                        {copiedShareUrl === result.address ? '✓ Copied!' : '🔗 Share'}
+                      </button>
+                      <button
+                        onClick={() => handleCopyText(result)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-600/20 hover:bg-gray-600/30 text-gray-300 text-xs rounded transition"
+                        title="Copy as text"
+                      >
+                        {copiedText ? '✓ Copied!' : '📄 Copy Text'}
+                      </button>
+                      <button
+                        onClick={() => handleDownload(result)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-600/20 hover:bg-gray-600/30 text-gray-300 text-xs rounded transition"
+                        title="Download JSON"
+                      >
+                        💾 Download JSON
+                      </button>
+                    </div>
                   </>
                 )}
               </motion.div>

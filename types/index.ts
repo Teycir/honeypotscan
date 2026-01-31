@@ -4,12 +4,24 @@ export interface Pattern {
   code: string;
 }
 
+export interface TokenMetadata {
+  name: string | null;
+  symbol: string | null;
+  compilerVersion: string | null;
+}
+
 export interface ScanResult {
   isHoneypot: boolean;
   confidence: number;
   patterns: readonly Pattern[];
   message: string;
   chain: string;
+  tokenMetadata?: TokenMetadata;
+}
+
+export interface FetchResult {
+  sourceCode: string;
+  metadata: TokenMetadata;
 }
 
 export interface KVNamespace {
