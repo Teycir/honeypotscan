@@ -29,6 +29,7 @@ const ETHERSCAN_URLS: Record<string, string> = {
 
 const SCAN_TIMEOUT = 30000; // 30 seconds per address
 const MAX_ADDRESSES = SECURITY_LIMITS.MAX_ADDRESSES_PER_BATCH;
+const DELAY_BETWEEN_SCANS = 3000; // 3 seconds delay between scans to avoid rate limiting
 
 // Create initial state arrays based on max addresses
 const createEmptyArray = () => Array(MAX_ADDRESSES).fill('');
@@ -190,6 +191,12 @@ export function AddressScanTab() {
         
         // Update results progressively
         setResults([...scanResults]);
+        
+        // Add delay between scans to avoid Etherscan API rate limiting
+        // Only add delay if there are more addresses to scan
+        if (i < validAddresses.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_SCANS));
+        }
       }
     } catch {
       setError('Scan was interrupted. Please try again.');
@@ -199,7 +206,7 @@ export function AddressScanTab() {
     }
   };
 
-  const filledCount = addresses.filter(a => a.trim()).length;
+  const filledCount = addresses.filter((a, i) => a.trim() && !validationErrors[i]).length;
   const successfulResults = results.filter(r => !r.error);
   const honeypotCount = successfulResults.filter(r => r.isHoneypot).length;
   const safeCount = successfulResults.filter(r => !r.isHoneypot).length;
